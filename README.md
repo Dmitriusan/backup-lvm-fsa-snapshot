@@ -49,5 +49,7 @@ Backup is compressed, compression uses all available CPUs, compression levels
 
 ## Example of command line to run backup
 ```
---compression-level 5
+--backup-dest-dir=/media/backups/server/auto --source-lvm-volume-group=server14vg \
+--source-lvm-logical-volume=system_lv --lvm-snapshot-tmp-file-dir=/media/backups/tmp \
+--tmp-dir-is-remote --daily-backup-max-count=7 --weekly-backup-max-count=4 --compression-level=5
 ```
