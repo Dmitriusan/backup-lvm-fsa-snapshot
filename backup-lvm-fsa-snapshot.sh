@@ -124,6 +124,7 @@ if [[ ! -z ${OLD_LOOP_DEV} ]]; then
 fi
 
 # Create tmp file for snapshot
+mkdir -p ${LVM_SNAP_TMP_FILE_DIR}
 TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
 
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
