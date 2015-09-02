@@ -130,7 +130,7 @@ TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
   fallocate -l 16G ${TMP_LVM_SNAPSHOT_FILE}
   RC=$?;
-else: # Use dd - universal method
+else # Use dd - universal method
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=1024
   RC=$?;
 fi
