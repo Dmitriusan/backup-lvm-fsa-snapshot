@@ -127,17 +127,21 @@ if [ ! -d ${BACKUP_DIR} ]; then
   mkdir -p ${BACKUP_DIR}
 fi
 
-# Check for previous unfinished backup
-OLD_LOOP_DEV=$(losetup -a | grep ${LVM_SNAP_TMP_FILE_DIR} | cut -d : -f 1)
+if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
+  # Check for previous unfinished backup
+  OLD_LOOP_DEV=$(losetup -a | grep ${LVM_SNAP_TMP_FILE_DIR} | cut -d : -f 1)
 
-if [[ ! -z ${OLD_LOOP_DEV} ]]; then
-  echo "Looks like previous backup was not properly finished, exiting. Need manual intervention"
-  exit 1
-fi
+  if [[ ! -z ${OLD_LOOP_DEV} ]]; then
+    echo "Looks like previous backup was not properly finished, exiting. Need manual intervention"
+    exit 1
+  fi
 
-# Create tmp file for snapshot
-mkdir -p ${LVM_SNAP_TMP_FILE_DIR}
-TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
+  # Create tmp file for snapshot
+  mkdir -p ${LVM_SNAP_TMP_FILE_DIR}
+  TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
+fi  # Otherwise use spare space on LVM partition - do nothing
+
+
 
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
   let count="( $SNAPSHOT_VOLUME_SIZE + 16 )"
