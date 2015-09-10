@@ -140,12 +140,13 @@ mkdir -p ${LVM_SNAP_TMP_FILE_DIR}
 TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
 
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
-  let count="( $SNAPSHOT_VOLUME_SIZE + 1 )"
+  let count="( $SNAPSHOT_VOLUME_SIZE + 16 )"
+  # at least 1 more 4mb extent is required for LVM physical volume metadata
   fallocate -l ${count}M ${TMP_LVM_SNAPSHOT_FILE}
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
   # Get ceiling integer by division for any snapshot size
-  # 1 more 4mb extent is required for LVM physical volume metadata
+  # at least 1 more 4mb extent is required for LVM physical volume metadata
   let count="( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16 + 1"
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
