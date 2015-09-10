@@ -96,8 +96,8 @@ CPU_COUNT=`grep -c ^bogomips /proc/cpuinfo`
 [ -z "$BACKUPS_AUTO_CREATED_LOCATION" ] && echo "--backup-dest-dir not specified" && exit 1
 [ -z "$LVM_ROOT_FS_VG" ] && echo "--source-lvm-volume-group not specified" && exit 1
 [ -z "$LVM_ROOT_FS_LV" ] && echo "--source-lvm-logical-volume not specified" && exit 1
-[ -z "$LVM_SNAP_TMP_FILE_DIR" ] && echo "--lvm-snapshot-tmp-file-dir not specified" && exit 1
 [ -z "$TMP_DIR_TYPE" ] && echo "Either --tmp-dir-is-local, --tmp-dir-is-remote or --tmp-dir-is-lvm should be specified" && exit 1
+[ "${TMP_DIR_TYPE}" != "lvm" ] && [ -z "$LVM_SNAP_TMP_FILE_DIR" ] && echo "--lvm-snapshot-tmp-file-dir not specified" && exit 1
 [ -z "$DAILY_BACKUP_MAX_COUNT" ] && echo "--daily-backup-max-count not specified" && exit 1
 [ -z "$WEEKLY_BACKUP_MAX_COUNT" ] && echo "--weekly-backup-max-count not specified" && exit 1
 [ -z "$COMPRESSION_LEVEL" ] && echo "--compression-level not specified" && exit 1
