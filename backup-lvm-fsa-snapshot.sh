@@ -147,6 +147,10 @@ elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
   let count = "( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16 "
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
+elif [ "${TMP_DIR_TYPE}" == "lvm" ]; then # Remove previous snapshot if it exists
+  if [ -e "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}" ]; then
+    lvremove --force "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}"
+  fi
 fi
 
 if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
@@ -172,7 +176,7 @@ if [[ ${RC} != 0 ]]; then
 fi
 
 # Drop snapshot and remove physical volume
-lvremove --force /dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}
+lvremove --force "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}"
 
 if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
   vgreduce ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
