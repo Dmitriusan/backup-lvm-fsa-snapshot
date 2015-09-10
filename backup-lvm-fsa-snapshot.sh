@@ -144,7 +144,8 @@ if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesyste
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
   # Get ceiling integer by division for any snapshot size
-  let count="( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16"
+  # 1 more 4mb extent is required for LVM physical volume metadata
+  let count="( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16 + 1"
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "lvm" ]; then # Remove previous snapshot if it exists
