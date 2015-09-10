@@ -2,6 +2,8 @@
 
 export SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+SNAPSHOT_VOLUME_SIZE=15360
+
 # Parse script args ( thanks http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash )
 while [[ $# -ge 1 ]]; do
   key="$1"
@@ -39,6 +41,15 @@ while [[ $# -ge 1 ]]; do
       TMP_DIR_TYPE="remote"
     ;;
 
+    --tmp-dir-is-lvm)    # Use when LVM volume group has enough spare space to create a tmp snapshot volume
+      TMP_DIR_TYPE="lvm"
+    ;;
+
+    --snapshot-volume-size-mb) # Size of tmp snapshot volume (defaults to 15360 megabytes)
+      SNAPSHOT_VOLUME_SIZE="$2"
+      shift
+    ;;
+
     --daily-backup-max-count)
       DAILY_BACKUP_MAX_COUNT="$2"
       shift
@@ -62,7 +73,8 @@ while [[ $# -ge 1 ]]; do
       echo "--source-lvm-volume-group <volume group name>"
       echo "--source-lvm-logical-volume <logical volume name>"
       echo "--lvm-snapshot-tmp-file-dir <place to store tmp file for snapshot writes>"
-      echo "--tmp-dir-is-local | --tmp-dir-is-remote"
+      echo "--tmp-dir-is-local | --tmp-dir-is-remote --tmp-dir-is-lvm"
+      echo "--snapshot-volume-size-mb <number, megabytes>"
       echo "--daily-backup-max-count <number>"
       echo "--weekly-backup-max-count <number>"
       echo "--compression-level <number>"
@@ -85,7 +97,7 @@ CPU_COUNT=`grep -c ^bogomips /proc/cpuinfo`
 [ -z "$LVM_ROOT_FS_VG" ] && echo "--source-lvm-volume-group not specified" && exit 1
 [ -z "$LVM_ROOT_FS_LV" ] && echo "--source-lvm-logical-volume not specified" && exit 1
 [ -z "$LVM_SNAP_TMP_FILE_DIR" ] && echo "--lvm-snapshot-tmp-file-dir not specified" && exit 1
-[ -z "$TMP_DIR_TYPE" ] && echo "Either --tmp-dir-is-local or --tmp-dir-is-remote should be specified" && exit 1
+[ -z "$TMP_DIR_TYPE" ] && echo "Either --tmp-dir-is-local, --tmp-dir-is-remote or --tmp-dir-is-lvm should be specified" && exit 1
 [ -z "$DAILY_BACKUP_MAX_COUNT" ] && echo "--daily-backup-max-count not specified" && exit 1
 [ -z "$WEEKLY_BACKUP_MAX_COUNT" ] && echo "--weekly-backup-max-count not specified" && exit 1
 [ -z "$COMPRESSION_LEVEL" ] && echo "--compression-level not specified" && exit 1
@@ -128,24 +140,29 @@ mkdir -p ${LVM_SNAP_TMP_FILE_DIR}
 TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
 
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
-  fallocate -l 16G ${TMP_LVM_SNAPSHOT_FILE}
+  fallocate -l ${SNAPSHOT_VOLUME_SIZE}MB ${TMP_LVM_SNAPSHOT_FILE}
   RC=$?;
-else # Use dd - universal method
-  dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=1024
+elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
+  # Get ceiling integer by division for any snapshot size
+  let count = "( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16 "
+  dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
 fi
 
-if [[ ${RC} != 0 ]]; then
-  echo "Can not create tmp file for LVM snapshot"
-  exit ${RC};
-fi
+if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
+  if [[ ${RC} != 0 ]]; then
+    echo "Can not create tmp file for LVM snapshot"
+    exit ${RC};
+  fi
 
-# Create loopback device first
-LOOPBACK_DEV=`losetup -f --show ${TMP_LVM_SNAPSHOT_FILE}`
+  # Create loopback device first
+  LOOPBACK_DEV=`losetup -f --show ${TMP_LVM_SNAPSHOT_FILE}`
 
-pvcreate ${LOOPBACK_DEV}
-vgextend ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
-lvcreate -s -n ${SNAP_NAME} -L 15g ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
+  pvcreate ${LOOPBACK_DEV}
+  vgextend ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
+fi  # Otherwise use spare space on LVM partition - do nothing
+
+lvcreate -s -n ${SNAP_NAME} -L ${SNAPSHOT_VOLUME_SIZE}M ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
 
 fsarchiver savefs -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} /dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}
 RC=$?;
@@ -156,10 +173,13 @@ fi
 
 # Drop snapshot and remove physical volume
 lvremove --force /dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}
-vgreduce ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
-pvremove ${LOOPBACK_DEV}
-losetup -d ${LOOPBACK_DEV}
-rm ${TMP_LVM_SNAPSHOT_FILE}
+
+if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
+  vgreduce ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
+  pvremove ${LOOPBACK_DEV}
+  losetup -d ${LOOPBACK_DEV}
+  rm ${TMP_LVM_SNAPSHOT_FILE}
+fi  # Otherwise use spare space on LVM partition - do nothing
 
 # Cleanup old backups (if current backup has been successfull)
 if [[ ${RC} == 0 ]]; then
