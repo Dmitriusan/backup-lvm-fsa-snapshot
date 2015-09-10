@@ -2,7 +2,7 @@
 
 export SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-SNAPSHOT_VOLUME_SIZE=15360
+SNAPSHOT_VOLUME_SIZE=4096
 
 # Parse script args ( thanks http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash )
 while [[ $# -ge 1 ]]; do
@@ -45,7 +45,7 @@ while [[ $# -ge 1 ]]; do
       TMP_DIR_TYPE="lvm"
     ;;
 
-    --snapshot-volume-size-mb) # Size of tmp snapshot volume (defaults to 15360 megabytes)
+    --snapshot-volume-size-mb) # Size of tmp snapshot volume (defaults to 4096 megabytes)
       SNAPSHOT_VOLUME_SIZE="$2"
       shift
     ;;
@@ -144,7 +144,7 @@ if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesyste
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
   # Get ceiling integer by division for any snapshot size
-  let count="( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16 "
+  let count="( $SNAPSHOT_VOLUME_SIZE + 16 - 1 ) / 16"
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "lvm" ]; then # Remove previous snapshot if it exists
@@ -166,7 +166,7 @@ if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
   vgextend ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
 fi  # Otherwise use spare space on LVM partition - do nothing
 
-lvcreate -s -n ${SNAP_NAME} -L ${SNAPSHOT_VOLUME_SIZE}M ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
+lvcreate -s -n ${SNAP_NAME} -L ${SNAPSHOT_VOLUME_SIZE}m ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
 
 fsarchiver savefs -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} /dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}
 RC=$?;

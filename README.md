@@ -26,7 +26,7 @@ vgreduce --removemissing --force <your vg name>
 - Script installs fsarchiver package if it is not installed
 - Script creates destination directory at --backup-dest-dir for storing backups 
 if it does not exist 
-- Script creates 15360 mb tmp file (use --snapshot-volume-size-mb to customize) 
+- Script creates 4096 mb tmp file (use --snapshot-volume-size-mb to customize) 
 in directory, specified via --lvm-snapshot-tmp-file-dir . 
 If arg --tmp-dir-is-local is specified,
  file is created using fallocate call (fast, but applicable only to local filesystem). 
@@ -38,7 +38,7 @@ If arg --tmp-dir-is-local is specified,
  Physical volume is created on the loop device created beforehand.
 - Then script creates an LVM snapshot for LVM logical volume specified via 
  --source-lvm-volume-group and --source-lvm-logical-volume options. Size of volume defaults to
-15360 mb and can be customized via --snapshot-volume-size-mb. 
+4096 mb and can be customized via --snapshot-volume-size-mb. 
 - Then script creates a dump of snapshot volume. Backup is created via fsarchiver. 
 Backup is compressed, compression uses all available CPUs, compression levels 
 (see http://www.fsarchiver.org/Compression) are defined using --compression-level
