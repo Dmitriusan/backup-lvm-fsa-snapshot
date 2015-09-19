@@ -159,7 +159,7 @@ elif [ "${TMP_DIR_TYPE}" == "lvm" ]; then # Remove previous snapshot if it exist
     lvremove --force "$SNAP_DEVICE"
     RC=$?;
     if [[ ${RC} != 0 ]]; then
-      echo "Could not remove an old snapshot $SNAP_DEVICE"
+      echo "Can not remove an old snapshot $SNAP_DEVICE"
       exit 1
     fi
   fi
