@@ -141,7 +141,7 @@ if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
   TMP_LVM_SNAPSHOT_FILE=${LVM_SNAP_TMP_FILE_DIR}/tmp_lvm_snapshot.img
 fi  # Otherwise use spare space on LVM partition - do nothing
 
-
+SNAP_DEVICE="/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}"
 
 if [ "${TMP_DIR_TYPE}" == "local" ]; then # Use fallocate - only local filesystem
   let count="( $SNAPSHOT_VOLUME_SIZE + 16 )"
@@ -155,8 +155,13 @@ elif [ "${TMP_DIR_TYPE}" == "remote" ]; then # Use dd - universal method
   dd if=/dev/zero of=${TMP_LVM_SNAPSHOT_FILE} bs=16M count=${count}
   RC=$?;
 elif [ "${TMP_DIR_TYPE}" == "lvm" ]; then # Remove previous snapshot if it exists
-  if [ -e "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}" ]; then
-    lvremove --force "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}"
+  if [ -e "$SNAP_DEVICE" ]; then
+    lvremove --force "$SNAP_DEVICE"
+    RC=$?;
+    if [[ ${RC} != 0 ]]; then
+      echo "Could not remove an old snapshot $SNAP_DEVICE"
+      exit 1
+    fi
   fi
 fi
 
@@ -175,7 +180,7 @@ fi  # Otherwise use spare space on LVM partition - do nothing
 
 lvcreate -s -n ${SNAP_NAME} -L ${SNAPSHOT_VOLUME_SIZE}m ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
 
-fsarchiver savefs -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} /dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}
+fsarchiver savefs -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} $SNAP_DEVICE
 RC=$?;
 if [[ ${RC} != 0 ]]; then
   echo "Backup failed, removing incomplete file"
@@ -183,7 +188,7 @@ if [[ ${RC} != 0 ]]; then
 fi
 
 # Drop snapshot and remove physical volume
-lvremove --force "/dev/${LVM_ROOT_FS_VG}/${SNAP_NAME}"
+lvremove --force "$SNAP_DEVICE"
 
 if [ "${TMP_DIR_TYPE}" != "lvm" ]; then
   vgreduce ${LVM_ROOT_FS_VG} ${LOOPBACK_DEV}
