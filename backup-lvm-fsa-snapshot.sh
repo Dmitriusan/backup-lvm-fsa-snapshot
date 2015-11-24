@@ -13,6 +13,10 @@ while [[ $# -ge 1 ]]; do
       set -x
     ;;
 
+    -d|--debug)
+      DEBUG="DEBUG"
+    ;;
+
     --backup-dest-dir)
       BACKUPS_AUTO_CREATED_LOCATION="$2"
       shift
@@ -68,6 +72,7 @@ while [[ $# -ge 1 ]]; do
     -h|--help)
       echo "Supported options:"
       echo "-v|--verbose"
+      echo "-d|--debug"
       echo "-h|--help"
       echo "--backup-dest-dir <place to store backups>"
       echo "--source-lvm-volume-group <volume group name>"
@@ -180,7 +185,11 @@ fi  # Otherwise use spare space on LVM partition - do nothing
 
 lvcreate -s -n ${SNAP_NAME} -L ${SNAPSHOT_VOLUME_SIZE}m ${LVM_ROOT_FS_VG}/${LVM_ROOT_FS_LV}
 
-fsarchiver savefs -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} $SNAP_DEVICE
+if [ ! -z "${DEBUG}" ]; then
+  FSARCHIVER_OPTS="${FSARCHIVER_OPTS} -vvvvv"
+fi
+
+fsarchiver savefs ${FSARCHIVER_OPTS} -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} $SNAP_DEVICE
 RC=$?;
 if [[ ${RC} != 0 ]]; then
   echo "Backup failed, removing incomplete file"
