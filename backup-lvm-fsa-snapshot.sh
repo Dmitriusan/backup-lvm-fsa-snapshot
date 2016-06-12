@@ -189,7 +189,7 @@ if [ ! -z "${DEBUG}" ]; then
   FSARCHIVER_OPTS="${FSARCHIVER_OPTS} -vvvvv"
 fi
 
-fsarchiver savefs ${FSARCHIVER_OPTS} -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} $SNAP_DEVICE
+fsarchiver savefs ${FSARCHIVER_OPTS} -j${CPU_COUNT} -z${COMPRESSION_LEVEL} -o ${BACKUP_DIR}/${BACKUP_NAME} ${SNAP_DEVICE}
 RC=$?;
 if [[ ${RC} != 0 ]]; then
   echo "Backup failed, removing incomplete file"
