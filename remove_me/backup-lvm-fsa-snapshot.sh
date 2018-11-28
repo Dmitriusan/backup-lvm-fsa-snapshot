@@ -95,6 +95,7 @@ while [[ $# -ge 1 ]]; do
   shift
 done
 
+# TODO:  multiprocessing.cpu_count()
 CPU_COUNT=`grep -c ^bogomips /proc/cpuinfo`
 
 # Check arguments
@@ -110,6 +111,8 @@ CPU_COUNT=`grep -c ^bogomips /proc/cpuinfo`
 # install fsarchiver
 apt-get -y update
 apt-get -y install fsarchiver
+
+# TODO: continue
 
 
 # Detect day of week (1..7); 1 is Monday

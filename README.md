@@ -1,20 +1,22 @@
 # backup-lvm-fsa-snapshot
-Create snapshot of LVM volume and back it up using filesystem archiver. 
-Snapshot volume is temporarily allocated on partition with backups.
-Old snapshots are removed (max counts of daily and weekly dumps are 
-configurable). Script is intended to be executed once every day.  
+A set of scripts performing backups. Each script is focused on a single function and attempts to perform it well
 
 
-## Beware!
-1. **Never** point backup file destination (--backup-dest-dir) to the same partition that is being 
+## Compatibility
+All scripts require Python version >= 3.5. All scripts are tested on Ubuntu 16.04/18.04 but should work on 
+all recent Debian-based distributions, and maybe also on other Linux flavours.
+
+
+## Beware when doing system backups via LVM snapshot feature!
+1. **Never** point backup archive file to the same partition that is being 
 backed up. **Snapshot space will be overfilled.**
-1. **Never** point tmp snaphot file destination (--lvm-snapshot-tmp-file-dir) to the same partition that is being 
-backed up. **Entire filesystem will hang!!!**
+1. **Never** point tmp snaphot file destination (`--lvm-snapshot-tmp-file` argument of `lvm_snaphot.py` script) 
+to the same partition that is being backed up. **Or entire filesystem will hang!!!**
 1. **Never reboot computer without removing snapshot volume and physical volume 
 pointing to loop device**. On next boot,
 temporary loop device will not be available, and entire LVM volume group will
 be marked as unreachable/unmountable, so operating system will fail
-to boot. The latter said does not rely to snapshot volumes allocated on spare
+to boot. The latter said does not rely to snapshot volumes allocated on a spare
 space of LVM partition.
 1. If you did not follow advice 2. and rebooted while performing backup, 
 you can fix everything by booting from live cd and running 
@@ -22,8 +24,23 @@ you can fix everything by booting from live cd and running
 vgreduce --removemissing --force <your vg name>
 ```
 
-## What script does
-- Script installs fsarchiver package if it is not installed
+# Example of a command line to run backup
+
+# Included scripts
+
+## lvm_snaphot.py
+This script can create and remove the LVM snapshot. 
+<!-- TODO: --> Write description
+
+
+###  What this script does
+
+- Script also performs necessary checks (more then 20) before doing serious things, and tries to carefully cleanup things
+ if previous script invocation failed.
+  
+
+<!-- TODO: -->
+- Script installs fsarchiver or pigz package if it is required and not installed
 - Script creates destination directory at --backup-dest-dir for storing backups 
 if it does not exist 
 - Script creates 4096 mb tmp file (use --snapshot-volume-size-mb to customize) 
@@ -47,15 +64,30 @@ Backup is compressed, compression uses all available CPUs, compression levels
  Limits of weekly and daily dump files are managed separately and 
  are defined using --daily-backup-max-count and
  --weekly-backup-max-count properties. Oldest dump files that exceed this limit are deleted.
- E.g. 7 dayly backups and 4 weekly backups mean that one has daily backups for the last week
+ E.g. 7 daily backups and 4 weekly backups mean that one has daily backups for the last week
  and weekly backups for the last month. 
 - After backup is finished, script removes physical volume, loop device and tmp file created earlier.
 - Then script removes old dumps (exceeding limits specified via --daily-backup-max-count 
  and --weekly-backup-max-count
 
-## Example of command line to run backup
+### Typical usage
+
+## manage_backups.py
+### Typical usage
+
 ```
---backup-dest-dir /media/backups/server/auto --source-lvm-volume-group server14vg \
---source-lvm-logical-volume system_lv --lvm-snapshot-tmp-file-dir /media/backups/tmp \
---tmp-dir-is-remote --daily-backup-max-count 7 --weekly-backup-max-count 4 --compression-level 5
+# Generate a name and an absolute path to backup file
+BACKUP_FILE=manage_backups.py generate-name --backup-dest-dir /media/backups --prefix system_dump --extension tar.gz
+# TODO: check exit code 
+
+```
+
+
+
+```
+$TMP_DIR/lvm_snaphot.py --source-lvm-vg dmi-desktop --source-lvm-lv system --lvm-snapshot-name snap1 --mountpoint  /media/system_snapshot --lvm-snapshot-tmp-file /media/raw/1.tmp --loop-device /dev/loop5  snapshot-mount && \
+#############
+sleep 30 && \
+#############
+$TMP_DIR/lvm_snaphot.py --source-lvm-vg dmi-desktop --source-lvm-lv system --lvm-snapshot-name snap1 --mountpoint  /media/system_snapshot --remove-mountpoint --lvm-snapshot-tmp-file /media/raw/1.tmp --loop-device /dev/loop5 snapshot-unmount"
 ```
