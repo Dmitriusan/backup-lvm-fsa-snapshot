@@ -36,6 +36,8 @@ def configure_parser():
 
   auto_clean_group = parser.add_argument_group('Options for an "%s" action' % AUTO_CLEAN_ACTION,
                                                'Auto-clean old backup files')
+  auto_clean_group.add_argument("--dry-mode", type=int, default=7,
+                                help="Don't perform any actions. Just show what would be done \n")
   auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=7,
                                 help="How many daily backups should be stored at the location specified by \n"
                                      "--backup-dest-dir . Older backups from this week are removed. The default \n"
@@ -116,6 +118,7 @@ def generate_name(args):
 
 
 def auto_clean(args):
+  # TODO: add dry mode
   # TODO: if the dest directory does not exist, exit
   # TODO: print stats on backup files
   # TODO: sparingly balance daily, weekly and monthly backups between periods
