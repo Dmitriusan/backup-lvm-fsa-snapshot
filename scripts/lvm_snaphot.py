@@ -251,8 +251,11 @@ def unmount(vg_name, snapshot_name, mountpoint, args):
 
         if os.path.isdir(mountpoint):
             if args.remove_mountpoint:
-                print("Removing mountpoint %s" % mountpoint)
-                os.rmdir(mountpoint)
+                if len(os.listdir(mountpoint)) == 0:
+                  print("Removing mountpoint %s" % mountpoint)
+                  os.rmdir(mountpoint)
+                else:
+                  print("The mountpoint directory is not empty, not removing it")
         else:
             raise "Mountpoint %s is expected to be a directory" % mountpoint
     else:

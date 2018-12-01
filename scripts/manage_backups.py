@@ -81,8 +81,8 @@ def configure_parser():
 
 
 def validate_args(args):
-  if args.remove_file and not args.action == AUTO_CLEAN_ACTION:
-    raise ValueError("--remove-file option is valid only for action '%s'" % AUTO_CLEAN_ACTION)
+  if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
+    raise ValueError("--remove-file option is valid only for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
   # TODO: add other restrictions
 
 
