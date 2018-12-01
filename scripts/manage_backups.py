@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import sys
 from datetime import datetime
 
@@ -118,26 +119,22 @@ def generate_name(args):
 
 
 def auto_clean(args):
-  # TODO: add dry mode
-  # TODO: if the dest directory does not exist, exit
-  # TODO: print stats on backup files
-  # TODO: sparingly balance daily, weekly and monthly backups between periods
-
   # TODO: populate list of backups
-  ## TODO: populate timestamps according to filename
-  entry = {
-    "path": "",
-    "timestamp": 4343,
-    "position_rating": 0,
-    "overall_rating": 0,
-  }
-  backups = []
+
+  if not os.path.isdir(args.backup_dest_dir):
+    msg = "Path %s is not a directory" % args.backup_dest_dir
+    return msg, 1
+
+  # TODO: print stats on backup files
+
+  backups = _list_backup_files(args)
 
   # TODO: fix syntax
   daily_backups = []
   weekly_backups = []
   monthly_backups = []
   yearly_backups = []
+  # TODO: sparingly balance daily, weekly and monthly backups between periods
   for backup in backups:
     if backup["date"] >= now - 7:
       daily_backups.append(backup)
@@ -157,11 +154,41 @@ def auto_clean(args):
   files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
   for backup in backups:
     if backup not in files_to_preserve:
-      print("Removing old backup %s" % backup)
-      os.remove(backup["path"])
+      # TODO: replace print - return results to main() method
+      if args.dry_mode:
+        print("Would remove old backup %s" % backup)
+      else:
+        print("Removing old backup %s" % backup)
+        os.remove(backup["path"])
 
 
-def filter_list_according_to_limit(src_list, max_entries, start_timestamp, end_timestamp):
+def _list_backup_files(args):
+  result = []
+
+  for file in os.listdir(args.backup_dest_dir):
+    if not os.path.isfile(file):
+      continue
+    # TODO: check if filename matches pattern
+    filename = os.path.basename(args.remove_file)
+    # TODO: try to match filename with regex
+    # Expected filename
+    regex_str = '{0}__\\d{6}_\\d{6}{1}'
+    regex = re.compile(regex_str)
+
+    ## TODO: populate timestamps according to filename
+    # entry = {
+    #   "path": "",
+    #   "timestamp": 4343,
+    #   "position_rating": 0,
+    #   "overall_rating": 0,
+    # }
+
+    if (file.)
+    pass # TODO
+  return result
+
+
+def _filter_list_according_to_limit(src_list, max_entries, start_timestamp, end_timestamp):
   """
 
   :param src_list: source list of backups
