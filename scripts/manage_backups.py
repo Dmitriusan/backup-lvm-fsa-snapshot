@@ -172,7 +172,7 @@ def _list_backup_files(args):
     filename = os.path.basename(args.remove_file)
     # TODO: try to match filename with regex
     # Expected filename
-    regex_str = '{0}__\\d{6}_\\d{6}{1}'
+    regex_str = '{0}__(\\d{6}_\\d{6}){1}'
     regex = re.compile(regex_str)
 
     ## TODO: populate timestamps according to filename
