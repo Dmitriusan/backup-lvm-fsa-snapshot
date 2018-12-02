@@ -156,6 +156,7 @@ def auto_clean(args):
   # TODO: cleanup lists to follow limits and distribute uniformly
   # TODO: instead of these src lists, add filtered lists
   files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
+  # TODO: _filter_list_according_to_limit()
   for backup in backups:
     if backup not in files_to_preserve:
       # TODO: replace print - return results to main() method
