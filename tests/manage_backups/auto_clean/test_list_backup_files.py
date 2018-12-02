@@ -18,7 +18,7 @@ def test_should_build_list(mocker):
   isfile_mock.return_value = True
 
   # Run method under test
-  result = listdir_mock(args)
+  result = _list_backup_files(args)
 
   # Assertions
   assert result == []
@@ -35,7 +35,7 @@ def test_should_skip_dirs(mocker):
   isfile_mock.return_value = False
 
   # Run method under test
-  result = listdir_mock(args)
+  result = _list_backup_files(args)
 
   # Assertions
   assert result == []
