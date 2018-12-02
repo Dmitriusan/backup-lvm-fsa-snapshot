@@ -170,7 +170,7 @@ def auto_clean(args):
 def _list_backup_files(args):
   result = []
   # Regex of expected filename
-  regex_str = '^%s__(\\d{6}_\\d{6})%s$' % (args.prefix, args.extension)
+  regex_str = '^%s__(\\d20{6}_\\d{6})%s$' % (args.prefix, args.extension)
   regex = re.compile(regex_str)
 
   for filename in os.listdir(args.backup_dest_dir):
