@@ -44,7 +44,7 @@ def test_should_skip_dirs(mocker):
   assert result == []
 
 
-def create_args(backup_dest_dir='/media/backups', prefix='test', extension='tar'):
+def create_args(backup_dest_dir='/media/backups', prefix='test', extension='.tar'):
   args = SimpleNamespace()
   args.backup_dest_dir = backup_dest_dir
   args.prefix = prefix
