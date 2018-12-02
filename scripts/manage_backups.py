@@ -173,11 +173,10 @@ def _list_backup_files(args):
   regex_str = '^%s__(\\d{6}_\\d{6})%s$' % (args.prefix, args.extension)
   regex = re.compile(regex_str)
 
-  for file in os.listdir(args.backup_dest_dir):
-    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), file)
-    if not os.path.isfile(file):
+  for filename in os.listdir(args.backup_dest_dir):
+    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), filename)
+    if not os.path.isfile(full_path):
       continue
-    filename = os.path.basename(args.remove_file)
     match = re.search(regex, filename)
     if not match:
       return
