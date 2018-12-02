@@ -9,10 +9,17 @@ from datetime import datetime
 GENERATE_NAME_ACTION = 'generate-name'
 AUTO_CLEAN_ACTION = 'auto-clean'
 REMOVE_UNSUCCESSFUL_ACTION = 'remove-unsuccessful'
+
 DATE_STRING_FORMAT = '%Y%m%d_%H%M%S'
 
+# Constant strings for dict
+PATH="PATH"
+FILENAME="FILENAME"
+TIMESTAMP="TIMESTAMP"
+POSITION_RATING="POSITION_RATING"
+OVERALL_RATING="OVERALL_RATING"
 
-# TODO: add action to create a symlink to a latest backup
+
 
 
 def configure_parser():
@@ -149,7 +156,6 @@ def auto_clean(args):
   # TODO: remove
 
   # TODO: cleanup lists to follow limits and distribute uniformly
-
   # TODO: instead of these src lists, add filtered lists
   files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
   for backup in backups:
@@ -164,27 +170,28 @@ def auto_clean(args):
 
 def _list_backup_files(args):
   result = []
+  regex_str = '^{0}__(\\d{6}_\\d{6}){1}$'
+  regex = re.compile(regex_str)
 
   for file in os.listdir(args.backup_dest_dir):
+    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), file)
     if not os.path.isfile(file):
       continue
     # TODO: check if filename matches pattern
     filename = os.path.basename(args.remove_file)
     # TODO: try to match filename with regex
     # Expected filename
-    regex_str = '{0}__(\\d{6}_\\d{6}){1}'
-    regex = re.compile(regex_str)
-
-    ## TODO: populate timestamps according to filename
-    # entry = {
-    #   "path": "",
-    #   "timestamp": 4343,
-    #   "position_rating": 0,
-    #   "overall_rating": 0,
-    # }
-
-    if (file.)
-    pass # TODO
+    match = re.search(regex, filename)
+    if not match:
+      return
+    date_str = match.group(1)
+    file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
+    entry = {
+      PATH: full_path,
+      FILENAME: filename,
+      TIMESTAMP: file_time.timestamp()
+    }
+    result.append(entry)
   return result
 
 
@@ -198,6 +205,13 @@ def _filter_list_according_to_limit(src_list, max_entries, start_timestamp, end_
   :return: a list of backups that should be preserved
   """
   result = []
+  ## TODO: populate timestamps according to filename
+  # entry = {
+  #   "path": "",
+  #   "timestamp": 4343,
+  #   "position_rating": 0,
+  #   "overall_rating": 0,
+  # }
 
   return result
 
