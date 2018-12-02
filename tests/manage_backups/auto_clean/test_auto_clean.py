@@ -18,7 +18,7 @@ def test_should_exit_cleanly_for_not_existing(mocker):
   assert exit_code == 0
 
 
-def create_args(backup_dest_dir='/media/backups', prefix='test', extension='tar',
+def create_args(backup_dest_dir='/media/backups', prefix='test', extension='.tar',
                 daily_backups_max_count=7, weekly_backups_max_count=4,
                 monthly_backups_max_count=6, yearly_backups_max_count=1):
   args = SimpleNamespace()

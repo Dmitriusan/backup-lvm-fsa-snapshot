@@ -108,7 +108,7 @@ def test_should_remove_file_if_all_checks_passed(mocker):
   assert exit_code == 0
 
 
-def create_args(backup_dest_dir='/media/backups', prefix='test', extension='tar'):
+def create_args(backup_dest_dir='/media/backups', prefix='test', extension='.tar'):
   args = SimpleNamespace()
   args.backup_dest_dir = backup_dest_dir
   args.prefix = prefix
