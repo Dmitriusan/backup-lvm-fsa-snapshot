@@ -20,8 +20,6 @@ POSITION_RATING="POSITION_RATING"
 OVERALL_RATING="OVERALL_RATING"
 
 
-
-
 def configure_parser():
   parser = argparse.ArgumentParser(
     description='This script is intended for managing auto-created backup files. It can generate a filename, and '
