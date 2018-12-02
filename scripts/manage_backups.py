@@ -169,6 +169,7 @@ def auto_clean(args):
 
 def _list_backup_files(args):
   result = []
+  # Regex of expected filename
   regex_str = '^{0}__(\\d{6}_\\d{6}){1}$'
   regex = re.compile(regex_str)
 
@@ -176,10 +177,7 @@ def _list_backup_files(args):
     full_path = os.path.join(os.path.abspath(args.backup_dest_dir), file)
     if not os.path.isfile(file):
       continue
-    # TODO: check if filename matches pattern
     filename = os.path.basename(args.remove_file)
-    # TODO: try to match filename with regex
-    # Expected filename
     match = re.search(regex, filename)
     if not match:
       return
