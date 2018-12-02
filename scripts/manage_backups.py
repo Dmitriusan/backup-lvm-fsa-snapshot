@@ -179,7 +179,7 @@ def _list_backup_files(args):
       continue
     match = re.search(regex, filename)
     if not match:
-      return
+      continue
     date_str = match.group(1)
     file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
     entry = {
