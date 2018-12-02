@@ -10,8 +10,8 @@ def test_should_build_list(mocker):
   args = create_args()
   listdir_mock = mocker.patch('os.listdir')
   listdir_mock.return_value = [
-    "test_.tar.gz",
-    "test__20181101_031401.tar.gz",
+    "test_.tar",
+    "test__20181101_031401.tar",
 
   ]
   isfile_mock = mocker.patch('os.path.isfile')
@@ -25,10 +25,13 @@ def test_should_build_list(mocker):
 
 
 def test_should_skip_dirs(mocker):
+  """
+  Checks that method skips directories even if their names follow the patter
+  """
   args = create_args()
   listdir_mock = mocker.patch('os.listdir')
   listdir_mock.return_value = [
-    "test__20181101_031401.tar.gz",
+    "test__20181101_031401.tar",
   ]
 
   isfile_mock = mocker.patch('os.path.isfile')
