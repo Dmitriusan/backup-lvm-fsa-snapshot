@@ -95,8 +95,8 @@ def test_should_remove_file_if_all_checks_passed(mocker):
   """
   # Configuration
   args = create_args()
-  mocker.patch('os.path.exists', return_value=True)
-  mocker.patch('os.path.isfile', return_value=True)
+  mocker.patch('manage_backups.os.path.exists', return_value=True)
+  mocker.patch('manage_backups.os.path.isfile', return_value=True)
 
   remove_mock = mocker.patch('os.remove')
 
