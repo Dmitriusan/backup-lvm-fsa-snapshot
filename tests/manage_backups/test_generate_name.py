@@ -1,5 +1,6 @@
 import datetime
 from types import SimpleNamespace
+
 from manage_backups import generate_name
 
 """
@@ -14,8 +15,7 @@ def test_name_generation(mocker):
   """
   # Configuration
   args = create_args()
-  exists_mock = mocker.patch('manage_backups.os.path.exists')
-  exists_mock.return_value = False
+  mocker.patch('manage_backups.os.path.exists', return_value=False)
   mocker.patch('manage_backups.os.makedirs')
 
   stderr_mock = mocker.patch('manage_backups.sys.stderr')

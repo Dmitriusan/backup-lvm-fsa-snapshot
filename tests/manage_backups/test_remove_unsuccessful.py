@@ -77,8 +77,8 @@ def test_should_error_out_if_dir_does_not_match(mocker):
   """
   # Configuration
   args = create_args(backup_dest_dir='/tmp')
-  mocker.patch('os.path.exists', new=lambda path: True)
-  mocker.patch('os.path.isfile', new=lambda path: True)
+  mocker.patch('os.path.exists', return_value=True)
+  mocker.patch('os.path.isfile', return_value=True)
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
@@ -95,8 +95,8 @@ def test_should_remove_file_if_all_checks_passed(mocker):
   """
   # Configuration
   args = create_args()
-  mocker.patch('os.path.exists', new=lambda path: True)
-  mocker.patch('os.path.isfile', new=lambda path: True)
+  mocker.patch('os.path.exists', return_value=True)
+  mocker.patch('os.path.isfile', return_value=True)
 
   remove_mock = mocker.patch('os.remove')
 
