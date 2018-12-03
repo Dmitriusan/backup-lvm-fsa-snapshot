@@ -129,26 +129,27 @@ def auto_clean(args):
     msg = "Path %s is not a directory" % args.backup_dest_dir
     return msg, 1
 
-  # TODO: print stats on backup files
 
   backups = _list_backup_files(args)
 
-  # TODO: fix syntax
   daily_backups = []
   weekly_backups = []
   monthly_backups = []
   yearly_backups = []
-  # TODO: sparingly balance daily, weekly and monthly backups between periods
+  now_timestamp = datetime.now().timestamp()
+  day_millis = 24 * 3600 * 1000
+
   for backup in backups:
-    if backup["date"] >= now - 7:
+    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
       daily_backups.append(backup)
-    elif now - 7 > backup["date"] >= now - 31:
+    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
       weekly_backups.append(backup)
-    elif now - 31 > backup["date"] >= now - 365:
+    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
       monthly_backups.append(backup)
-    elif now - 365 > backup["date"]:
+    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
       yearly_backups.append(backup)
 
+  # TODO: sparingly balance daily, weekly and monthly backups between periods
   # TODO: filter each list according to periods
   # TODO: remove
 
@@ -156,6 +157,7 @@ def auto_clean(args):
   # TODO: instead of these src lists, add filtered lists
   files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
   # TODO: _filter_list_according_to_limit()
+  # TODO: print stats on backup files
   for backup in backups:
     if backup not in files_to_preserve:
       # TODO: replace print - return results to main() method
