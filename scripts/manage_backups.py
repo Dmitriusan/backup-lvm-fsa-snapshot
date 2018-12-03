@@ -110,7 +110,7 @@ def generate_name(args):
     error = "File %s already exists\n" % full_path
 
   if os.path.exists(args.backup_dest_dir) and not os.path.isdir(args.backup_dest_dir):
-    error = "--backup-dest-dir argument points to existing file %s that is not a directory\n" % args.backup_dest_dir
+    error = "--backup-dest-dir argument points to an existing file %s that is not a directory\n" % args.backup_dest_dir
 
   if error:
     full_path = "/dev/null"  # a safeguard against breaking substitution logic at shell scripts
