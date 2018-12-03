@@ -88,8 +88,8 @@ def test_case_creation_of_destination_dir(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('manage_backups.os.path.exists', new=lambda path: False)
-  mocker.patch('manage_backups.os.path.isdir', new=lambda path: False)
+  mocker.patch('manage_backups.os.path.exists', return_value=False)
+  mocker.patch('manage_backups.os.path.isdir', return_value=False)
 
   makedirs_mock = mocker.patch('manage_backups.os.makedirs')
 
