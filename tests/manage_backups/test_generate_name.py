@@ -83,7 +83,7 @@ def test_case_destination_dir_is_plain_file(mocker):
   assert generated_name == '/dev/null'
   assert exit_code == 1
   assert not makedirs_mock.called
-  stderr_mock.write.assert_called_once_with("--backup-dest-dir argument points to existing file /media/backups "
+  stderr_mock.write.assert_called_once_with("--backup-dest-dir argument points to an existing file /media/backups "
                                             "that is not a directory\n")
 
 
