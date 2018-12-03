@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+
 from manage_backups import _list_backup_files
 
 
@@ -12,7 +13,8 @@ def test_should_build_list(mocker):
   listdir_mock.return_value = [
     "test_.tar",
     "test__20181101_031401.tar",
-
+    "test_me__20181102_031401.tar",
+    "test__20181102_031401.tar",
   ]
   isfile_mock = mocker.patch('manage_backups.os.path.isfile')
   isfile_mock.return_value = True
@@ -21,7 +23,18 @@ def test_should_build_list(mocker):
   result = _list_backup_files(args)
 
   # Assertions
-  assert result == []
+  assert result == [
+    {
+      'FILENAME': 'test__20181101_031401.tar',
+      'PATH': '/media/backups/test__20181101_031401.tar',
+      'TIMESTAMP': 1541034841.0
+    },
+    {
+      'FILENAME': 'test__20181102_031401.tar',
+      'PATH': '/media/backups/test__20181102_031401.tar',
+      'TIMESTAMP': 1541121241.0
+    }
+  ]
 
 
 def test_should_skip_dirs(mocker):
