@@ -108,8 +108,7 @@ def generate_name(args):
   error = None
   if os.path.exists(full_path):
     error = "File %s already exists\n" % full_path
-
-  if os.path.exists(args.backup_dest_dir) and not os.path.isdir(args.backup_dest_dir):
+  elif os.path.exists(args.backup_dest_dir) and not os.path.isdir(args.backup_dest_dir):
     error = "--backup-dest-dir argument points to an existing file %s that is not a directory\n" % args.backup_dest_dir
 
   if error:
