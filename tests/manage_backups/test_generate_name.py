@@ -63,7 +63,13 @@ def test_case_destination_dir_is_plain_file(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('manage_backups.os.path.exists', return_value=True)
+  def exists_side_effect(path):
+    if path == args.backup_dest_dir:
+      return True
+    else:
+      return False
+
+  mocker.patch('manage_backups.os.path.exists', side_effect=exists_side_effect)
   mocker.patch('manage_backups.os.path.isdir', return_value=False)
 
   makedirs_mock = mocker.patch('manage_backups.os.makedirs')
