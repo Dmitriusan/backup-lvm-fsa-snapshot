@@ -9,6 +9,7 @@ def test_should_exit_cleanly_for_not_existing(mocker):
   # Configuration
   args = create_args()
   mocker.patch('os.path.exists', new=lambda path: False)
+  mocker.patch('os.remove')
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
@@ -26,6 +27,7 @@ def test_should_error_out_on_directory(mocker):
   args = create_args()
   mocker.patch('os.path.exists', new=lambda path: True)
   mocker.patch('os.path.isfile', new=lambda path: False)
+  mocker.patch('os.remove')
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
@@ -43,6 +45,7 @@ def test_should_error_out_if_extension_differs(mocker):
   args = create_args(extension='tar.gz')
   mocker.patch('os.path.exists', new=lambda path: True)
   mocker.patch('os.path.isfile', new=lambda path: True)
+  mocker.patch('os.remove')
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
@@ -61,6 +64,7 @@ def test_should_error_out_if_prefix_differs(mocker):
   args = create_args(prefix='wrong_prefix')
   mocker.patch('os.path.exists', new=lambda path: True)
   mocker.patch('os.path.isfile', new=lambda path: True)
+  mocker.patch('os.remove')
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
@@ -79,6 +83,7 @@ def test_should_error_out_if_dir_does_not_match(mocker):
   args = create_args(backup_dest_dir='/tmp')
   mocker.patch('os.path.exists', return_value=True)
   mocker.patch('os.path.isfile', return_value=True)
+  mocker.patch('os.remove')
 
   # Run method under test
   output, exit_code = remove_unsuccessful(args)
