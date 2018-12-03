@@ -129,34 +129,18 @@ def auto_clean(args):
     msg = "Path %s is not a directory" % args.backup_dest_dir
     return msg, 1
 
-
   backups = _list_backup_files(args)
 
-  daily_backups = []
-  weekly_backups = []
-  monthly_backups = []
-  yearly_backups = []
-  now_timestamp = datetime.now().timestamp()
-  day_millis = 24 * 3600 * 1000
 
-  for backup in backups:
-    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
-      daily_backups.append(backup)
-    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
-      weekly_backups.append(backup)
-    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
-      monthly_backups.append(backup)
-    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
-      yearly_backups.append(backup)
 
   # TODO: sparingly balance daily, weekly and monthly backups between periods
-  # TODO: filter each list according to periods
-  # TODO: remove
 
   # TODO: cleanup lists to follow limits and distribute uniformly
   # TODO: instead of these src lists, add filtered lists
+  # TODO: remove
   files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
-  # TODO: _filter_list_according_to_limit()
+  # TODO: filter each list according to periods
+  # TODO: _filter_backups_according_to_limits()
   # TODO: print stats on backup files
   for backup in backups:
     if backup not in files_to_preserve:
@@ -192,16 +176,34 @@ def _list_backup_files(args):
   return result
 
 
-def _filter_list_according_to_limit(src_list, max_entries, start_timestamp, end_timestamp):
+def _filter_backups_according_to_limits(backups, max_entries, start_timestamp, end_timestamp):
   """
 
-  :param src_list: source list of backups
+  :param backups: source list of backups
   :param max_entries: the maximum number of entries that may be preserved in a list
   :param start_timestamp: timestamp when time period starts 
   :param end_timestamp: timestamp when time period ends
   :return: a list of backups that should be preserved
   """
   result = []
+
+  daily_backups = []
+  weekly_backups = []
+  monthly_backups = []
+  yearly_backups = []
+  now_timestamp = datetime.now().timestamp()
+  day_millis = 24 * 3600 * 1000
+
+  for backup in backups:
+    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
+      daily_backups.append(backup)
+    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
+      weekly_backups.append(backup)
+    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
+      monthly_backups.append(backup)
+    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
+      yearly_backups.append(backup)
+
   ## TODO: populate timestamps according to filename
   # entry = {
   #   "path": "",
