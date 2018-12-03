@@ -38,7 +38,7 @@ def test_case_existing_destination_file(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('manage_backups.os.path.exists', new=lambda path: True)
+  mocker.patch('manage_backups.os.path.exists', return_value=True)
   makedirs_mock = mocker.patch('manage_backups.os.makedirs')
   stderr_mock = mocker.patch('manage_backups.sys.stderr')
 
