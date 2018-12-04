@@ -123,36 +123,33 @@ def generate_name(args):
 
 
 def auto_clean(args):
-  # TODO: populate list of backups
-
   if not os.path.isdir(args.backup_dest_dir):
     msg = "Path %s is not a directory" % args.backup_dest_dir
     return msg, 1
 
   backups = _list_backup_files(args)
+  files_to_preserve = _filter_backups_according_to_limits(backups, args)
 
-
-
-  # TODO: sparingly balance daily, weekly and monthly backups between periods
-
-  # TODO: cleanup lists to follow limits and distribute uniformly
-  # TODO: instead of these src lists, add filtered lists
-  # TODO: remove
-  files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
-  # TODO: filter each list according to periods
-  # TODO: _filter_backups_according_to_limits()
-  # TODO: print stats on backup files
-  for backup in backups:
+  stdout = []
+  backups_to_remove = [backup for backup in backups if backup not in files_to_preserve]
+  for backup in backups_to_remove:
     if backup not in files_to_preserve:
-      # TODO: replace print - return results to main() method
       if args.dry_mode:
-        print("Would remove old backup %s" % backup)
+        stdout.append("Would remove old backup %s" % backup[FILENAME])
       else:
-        print("Removing old backup %s" % backup)
-        os.remove(backup["path"])
+        stdout.append("Removing old backup %s" % backup[FILENAME])
+        os.remove(backup[PATH])
+  if not args.dry_mode:
+    stdout.append("Removed %s old backup files." % len(backups_to_remove))
+  return "\n".join(stdout), 0
 
 
 def _list_backup_files(args):
+  """
+  Lists backup files at a directory.
+  :param args: application args
+  :return: a list of backups sorted ascending by timestamps, e.g. the most recent backup is last
+  """
   result = []
   # Regex of expected filename
   regex_str = '^%s__(20\\d{6}_\\d{6})%s$' % (re.escape(args.prefix), re.escape(args.extension))
@@ -173,37 +170,25 @@ def _list_backup_files(args):
       TIMESTAMP: file_time.timestamp()
     }
     result.append(entry)
-  return result
+  return sorted(result, key=lambda item: item[TIMESTAMP])
 
 
-def _filter_backups_according_to_limits(backups, max_entries, start_timestamp, end_timestamp):
+def _filter_backups_according_to_limits(backups, args):
   """
-
-  :param backups: source list of backups
-  :param max_entries: the maximum number of entries that may be preserved in a list
-  :param start_timestamp: timestamp when time period starts 
-  :param end_timestamp: timestamp when time period ends
+  :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
   :return: a list of backups that should be preserved
   """
+  # TODO: move to some other method
+  # :param max_entries: the maximum number of entries that may be preserved in a list
+  # :param start_timestamp: timestamp when time period starts
+  # :param end_timestamp: timestamp when time period ends
+  # TODO: filter each list according to periods
+
   result = []
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
+  # TODO: sparingly balance daily, weekly and monthly backups between periods
 
-  daily_backups = []
-  weekly_backups = []
-  monthly_backups = []
-  yearly_backups = []
-  now_timestamp = datetime.now().timestamp()
-  day_millis = 24 * 3600 * 1000
-
-  for backup in backups:
-    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
-      daily_backups.append(backup)
-    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
-      weekly_backups.append(backup)
-    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
-      monthly_backups.append(backup)
-    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
-      yearly_backups.append(backup)
-
+  # TODO: cleanup lists to follow limits and distribute uniformly
   ## TODO: populate timestamps according to filename
   # entry = {
   #   "path": "",
@@ -213,6 +198,25 @@ def _filter_backups_according_to_limits(backups, max_entries, start_timestamp, e
   # }
 
   return result
+
+
+def _split_backups(backups):
+  daily_backups = []
+  weekly_backups = []
+  monthly_backups = []
+  yearly_backups = []
+  now_timestamp = datetime.now().timestamp()
+  day_millis = 24 * 3600 * 1000
+  for backup in backups:
+    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
+      daily_backups.append(backup)
+    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
+      weekly_backups.append(backup)
+    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
+      monthly_backups.append(backup)
+    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
+      yearly_backups.append(backup)
+  return daily_backups, weekly_backups, monthly_backups, yearly_backups
 
 
 def remove_unsuccessful(args):
@@ -253,15 +257,15 @@ def main():
   validate_args(args)
 
   exit_code = 0
+  stdout = ''
   if args.action == GENERATE_NAME_ACTION:
-    generated_name, exit_code = generate_name(args)
-    print(generated_name)
+    stdout, exit_code = generate_name(args)
   elif args.action == AUTO_CLEAN_ACTION:
-    generated_name, exit_code = auto_clean(args)
+    stdout, exit_code = auto_clean(args)
   elif args.action == REMOVE_UNSUCCESSFUL_ACTION:
-    output, exit_code = remove_unsuccessful(args)
-    print(output)
+    stdout, exit_code = remove_unsuccessful(args)
   # There can not be another value thanks to argparse validation
+  print(stdout)
   sys.exit(exit_code)
 
 

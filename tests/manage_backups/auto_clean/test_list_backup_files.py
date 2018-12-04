@@ -3,15 +3,16 @@ from types import SimpleNamespace
 from manage_backups import _list_backup_files
 
 
-def test_should_build_list(mocker):
+def test_should_build_a_sorted_list(mocker):
   """
-  Checks that method lists only backup files. Other files should be skipped
+  Checks that method lists only backup files. Other files should be skipped. List should be sorted by timestamp
   """
   # Configuration
   args = create_args()
   listdir_mock = mocker.patch('manage_backups.os.listdir')
   listdir_mock.return_value = [
     "test_.tar",
+    "test__20191101_031401.tar",
     "test__20181101_031401.tar",
     "test_me__20181102_031401.tar",
     "test__20181102_031401.tar",
@@ -33,6 +34,11 @@ def test_should_build_list(mocker):
       'FILENAME': 'test__20181102_031401.tar',
       'PATH': '/media/backups/test__20181102_031401.tar',
       'TIMESTAMP': 1541121241.0
+    },
+    {
+      'FILENAME': 'test__20191101_031401.tar',
+      'PATH': '/media/backups/test__20191101_031401.tar',
+      'TIMESTAMP': 1572570841.0
     }
   ]
 
