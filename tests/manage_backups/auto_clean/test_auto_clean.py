@@ -59,14 +59,12 @@ def test_positive_flow(mocker):
   stdout_lines = output.splitlines()
   assert list_backup_files_mock.called
   assert filter_backups_according_to_limits_mock.called
-  # TODO: populate
   assert remove_mock.call_args_list == [
     mocker.call('/media/backups/sample_file100'),
     mocker.call('/media/backups/sample_file200'),
     mocker.call('/media/backups/sample_file400')
   ]
   assert len(stdout_lines) == len(expected_files_for_removal) + 1
-  # TODO: populate
   assert stdout_lines[-1] == "Removed 3 old backup files."
   assert exit_code == 0
 
