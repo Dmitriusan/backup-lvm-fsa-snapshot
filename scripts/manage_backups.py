@@ -37,27 +37,26 @@ def configure_parser():
   parser.add_argument("--extension", type=str, required=True,
                       help="String that should be appended to a name of the backup file")
 
-  generate_name_group = parser.add_argument_group('Options for a "%s" action' % GENERATE_NAME_ACTION,
-                                                  'File name generation for a backup file')
-
   auto_clean_group = parser.add_argument_group('Options for an "%s" action' % AUTO_CLEAN_ACTION,
                                                'Auto-clean old backup files')
   auto_clean_group.add_argument("--dry-mode", type=int, default=7,
                                 help="Don't perform any actions. Just show what would be done \n")
-  auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=7,
-                                help="How many daily backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older backups from this week are removed. The default \n"
-                                     "value is 5. \n")
-  auto_clean_group.add_argument("--weekly-backups-max-count", type=int, default=4,
-                                help="How many latest weekly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older weekly backups are removed. The default "
-                                     "value is 2.")
-  auto_clean_group.add_argument("--monthly-backups-max-count", type=int, default=12,
-                                help="How many latest monthly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older monthly backups are removed. The default value is 1.")
-  auto_clean_group.add_argument("--yearly-backups-max-count", type=int, default=3,
-                                help="How many latest yearly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older yearly backups are removed. The default value is 0.")
+  auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=5,
+                                help="Max number of daily backups (performed during last 7 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 5. \n")
+  auto_clean_group.add_argument("--weekly-backups-max-count", type=int, default=3,
+                                help="Max number of weekly backups (performed during last 31 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 3. \n")
+  auto_clean_group.add_argument("--monthly-backups-max-count", type=int, default=6,
+                                help="Max number of monthly backups (performed during last 365 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 6. \n")
+  auto_clean_group.add_argument("--yearly-backups-max-count", type=int, default=0,
+                                help="Max number of yearly backups (performed over 365 days ago) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 0. \n")
 
   remove_unsuccessful_group = parser.add_argument_group('Options for a "%s" action' % REMOVE_UNSUCCESSFUL_ACTION,
                                                         'Remove leftovers after a previous unsuccessful backup')
@@ -90,8 +89,12 @@ def configure_parser():
 
 def validate_args(args):
   if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
-    raise ValueError("--remove-file option is valid only for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
-  # TODO: add other restrictions
+    raise ValueError("--remove-file option is only valid for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
+  if (args.daily_backups_max_count or args.weekly_backups_max_count or
+      args.monthly_backups_max_count or args.yearly_backups_max_count) \
+     and not args.action == AUTO_CLEAN_ACTION:
+    raise ValueError("--daily-backups-max-count, --weekly-backups-max-count, --monthly-backups-max-count, \n"
+                     "and --yearly-backups-max-count arguments are only valid for action '%s'" % AUTO_CLEAN_ACTION)
 
 
 def generate_name(args):

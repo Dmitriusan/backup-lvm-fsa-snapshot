@@ -69,7 +69,50 @@ def test_positive_flow(mocker):
   assert exit_code == 0
 
 
-# TODO: test dry mode
+def test_should_not_perform_actions_in_dry_mode(mocker):
+  """
+  Checks that in dry mode, no actual actions are done
+  """
+  # Configuration
+  args = create_args(dry_mode=True)
+
+  list_of_backups = [
+    create_entry(args, 100),
+    create_entry(args, 200),
+    create_entry(args, 300),
+    create_entry(args, 400),
+    create_entry(args, 500),
+    create_entry(args, 600),
+  ]
+  files_that_should_be_preserved = [
+    list_of_backups[2],
+    list_of_backups[4],
+    list_of_backups[5]
+  ]
+  expected_files_for_removal = [
+    list_of_backups[0],
+    list_of_backups[1],
+    list_of_backups[3]
+  ]
+
+  mocker.patch('manage_backups.os.path.isdir', return_value=True)
+  list_backup_files_mock = mocker.patch('manage_backups._list_backup_files', return_value = list_of_backups)
+  filter_backups_according_to_limits_mock = mocker.patch('manage_backups._filter_backups_according_to_limits',
+                                                         return_value=files_that_should_be_preserved)
+  remove_mock = mocker.patch('manage_backups.os.remove')
+
+  # Run method under test
+  output, exit_code = auto_clean(args)
+
+  # Assertions
+  stdout_lines = output.splitlines()
+  assert list_backup_files_mock.called
+  assert filter_backups_according_to_limits_mock.called
+  assert not remove_mock.called
+  assert len(stdout_lines) == len(expected_files_for_removal)
+  for line in stdout_lines:
+    assert line.startswith("Would remove")
+  assert exit_code == 0
 
 
 def create_entry(args, timestamp):
