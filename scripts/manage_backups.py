@@ -90,11 +90,6 @@ def configure_parser():
 def validate_args(args):
   if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
     raise ValueError("--remove-file option is only valid for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
-  if (args.daily_backups_max_count or args.weekly_backups_max_count or
-      args.monthly_backups_max_count or args.yearly_backups_max_count) \
-     and not args.action == AUTO_CLEAN_ACTION:
-    raise ValueError("--daily-backups-max-count, --weekly-backups-max-count, --monthly-backups-max-count, \n"
-                     "and --yearly-backups-max-count arguments are only valid for action '%s'" % AUTO_CLEAN_ACTION)
 
 
 def generate_name(args):
