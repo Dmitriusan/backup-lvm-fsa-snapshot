@@ -204,15 +204,15 @@ def _split_backups(backups):
   monthly_backups = []
   yearly_backups = []
   now_timestamp = datetime.now().timestamp()
-  day_millis = 24 * 3600 * 1000
+  day_seconds = 24 * 3600
   for backup in backups:
-    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
+    if backup[TIMESTAMP] >= now_timestamp - 7 * day_seconds:
       daily_backups.append(backup)
-    elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
+    elif now_timestamp - 7 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 31 * day_seconds:
       weekly_backups.append(backup)
-    elif now_timestamp - 31 * day_millis > backup[TIMESTAMP] >= now_timestamp - 365 * day_millis:
+    elif now_timestamp - 31 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 365 * day_seconds:
       monthly_backups.append(backup)
-    elif now_timestamp - 365 * day_millis > backup[TIMESTAMP]:
+    elif now_timestamp - 365 * day_seconds > backup[TIMESTAMP]:
       yearly_backups.append(backup)
   return daily_backups, weekly_backups, monthly_backups, yearly_backups
 
