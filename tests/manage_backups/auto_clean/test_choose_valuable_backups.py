@@ -57,7 +57,7 @@ def create_args(backup_dest_dir='/media/backups', prefix='test', extension='.tar
   args.backup_dest_dir = backup_dest_dir
   args.prefix = prefix
   args.extension = extension
-  args.daily_backups_max_count = daily_backups_max_count,
+  args.daily_backups_max_count = daily_backups_max_count
   args.weekly_backups_max_count = weekly_backups_max_count
   args.monthly_backups_max_count = monthly_backups_max_count
   args.yearly_backups_max_count = yearly_backups_max_count
