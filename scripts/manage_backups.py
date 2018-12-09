@@ -191,11 +191,11 @@ def _choose_valuable_backups(backups, args):
   daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
   max_count = args.daily_backups_max_count + args.weekly_backups_max_count + \
       args.monthly_backups_max_count + args.yearly_backups_max_count
-  for backup in reversed(yearly_backups + daily_backups + weekly_backups + yearly_backups):
+  for backup in reversed(yearly_backups + monthly_backups + weekly_backups + daily_backups):
     if len(result) >= max_count:
       break
     result.append(backup)
-
+  result.reverse()
   return result
 
 

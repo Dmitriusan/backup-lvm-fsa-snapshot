@@ -29,14 +29,21 @@ def test_should_return_limited_number_of_backups(mocker):
   expected_number_of_chosen_backups = args.daily_backups_max_count + args.weekly_backups_max_count + \
       args.monthly_backups_max_count + args.yearly_backups_max_count
 
-
   # Run method under test
   chosen_backups = manage_backups._choose_valuable_backups(list_of_backups, args)
 
   assert len(chosen_backups) == expected_number_of_chosen_backups
   assert chosen_backups == [
 
+    {
+      'FILENAME': 'sample_file_20181113_031512',
+      'PATH': '/path/to/backups/sample_file_20181113_031512',
+      'TIMESTAMP': 1542071712.0
+    },
   ]
+
+
+# TODO: should work with small list
 
 
 def create_entry(datetime_str):
