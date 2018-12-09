@@ -1,5 +1,6 @@
 import datetime
 from types import SimpleNamespace
+
 from manage_backups import generate_name
 
 """
@@ -14,7 +15,8 @@ def test_name_generation(mocker):
   """
   # Configuration
   args = create_args()
-  mocker.patch('os.makedirs')
+  mocker.patch('manage_backups.os.path.exists', return_value=False)
+  mocker.patch('manage_backups.os.makedirs')
 
   stderr_mock = mocker.patch('manage_backups.sys.stderr')
 
@@ -36,8 +38,8 @@ def test_case_existing_destination_file(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('os.path.exists', new=lambda path: True)
-  makedirs_mock = mocker.patch('os.makedirs')
+  mocker.patch('manage_backups.os.path.exists', return_value=True)
+  makedirs_mock = mocker.patch('manage_backups.os.makedirs')
   stderr_mock = mocker.patch('manage_backups.sys.stderr')
 
   mock_time(mocker)
@@ -61,10 +63,16 @@ def test_case_destination_dir_is_plain_file(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('os.path.exists', new=lambda path: True)
-  mocker.patch('os.path.isdir', new=lambda path: False)
+  def exists_side_effect(path):
+    if path == args.backup_dest_dir:
+      return True
+    else:
+      return False
 
-  makedirs_mock = mocker.patch('os.makedirs')
+  mocker.patch('manage_backups.os.path.exists', side_effect=exists_side_effect)
+  mocker.patch('manage_backups.os.path.isdir', return_value=False)
+
+  makedirs_mock = mocker.patch('manage_backups.os.makedirs')
   stderr_mock = mocker.patch('manage_backups.sys.stderr')
   mock_time(mocker)
 
@@ -75,7 +83,7 @@ def test_case_destination_dir_is_plain_file(mocker):
   assert generated_name == '/dev/null'
   assert exit_code == 1
   assert not makedirs_mock.called
-  stderr_mock.write.assert_called_once_with("--backup-dest-dir argument points to existing file /media/backups "
+  stderr_mock.write.assert_called_once_with("--backup-dest-dir argument points to an existing file /media/backups "
                                             "that is not a directory\n")
 
 
@@ -86,10 +94,10 @@ def test_case_creation_of_destination_dir(mocker):
   # Configuration
   args = create_args()
 
-  mocker.patch('os.path.exists', new=lambda path: False)
-  mocker.patch('os.path.isdir', new=lambda path: False)
+  mocker.patch('manage_backups.os.path.exists', return_value=False)
+  mocker.patch('manage_backups.os.path.isdir', return_value=False)
 
-  makedirs_mock = mocker.patch('os.makedirs')
+  makedirs_mock = mocker.patch('manage_backups.os.makedirs')
 
   mock_time(mocker)
 

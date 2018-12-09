@@ -2,16 +2,22 @@
 
 import argparse
 import os
+import re
 import sys
 from datetime import datetime
 
 GENERATE_NAME_ACTION = 'generate-name'
 AUTO_CLEAN_ACTION = 'auto-clean'
 REMOVE_UNSUCCESSFUL_ACTION = 'remove-unsuccessful'
+
 DATE_STRING_FORMAT = '%Y%m%d_%H%M%S'
 
-
-# TODO: add action to create a symlink to a latest backup
+# Constant strings for dict
+PATH = "PATH"
+FILENAME = "FILENAME"
+TIMESTAMP = "TIMESTAMP"
+POSITION_RATING = "POSITION_RATING"
+OVERALL_RATING = "OVERALL_RATING"
 
 
 def configure_parser():
@@ -31,25 +37,25 @@ def configure_parser():
   parser.add_argument("--extension", type=str, required=True,
                       help="String that should be appended to a name of the backup file")
 
-  generate_name_group = parser.add_argument_group('Options for a "%s" action' % GENERATE_NAME_ACTION,
-                                                  'File name generation for a backup file')
-
   auto_clean_group = parser.add_argument_group('Options for an "%s" action' % AUTO_CLEAN_ACTION,
                                                'Auto-clean old backup files')
-  auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=7,
-                                help="How many daily backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older backups from this week are removed. The default \n"
-                                     "value is 5. \n")
-  auto_clean_group.add_argument("--weekly-backups-max-count", type=int, default=4,
-                                help="How many latest weekly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older weekly backups are removed. The default "
-                                     "value is 2.")
-  auto_clean_group.add_argument("--monthly-backups-max-count", type=int, default=12,
-                                help="How many latest monthly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older monthly backups are removed. The default value is 1.")
-  auto_clean_group.add_argument("--yearly-backups-max-count", type=int, default=3,
-                                help="How many latest yearly backups should be stored at the location specified by \n"
-                                     "--backup-dest-dir . Older yearly backups are removed. The default value is 0.")
+  auto_clean_group.add_argument("--dry-mode", help="Don't perform any actions. Just show what would be done \n")
+  auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=5,
+                                help="Max number of daily backups (performed during last 7 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 5. \n")
+  auto_clean_group.add_argument("--weekly-backups-max-count", type=int, default=3,
+                                help="Max number of weekly backups (performed during last 31 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 3. \n")
+  auto_clean_group.add_argument("--monthly-backups-max-count", type=int, default=6,
+                                help="Max number of monthly backups (performed during last 365 days) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 6. \n")
+  auto_clean_group.add_argument("--yearly-backups-max-count", type=int, default=0,
+                                help="Max number of yearly backups (performed over 365 days ago) that can be \n"
+                                     "stored at a location specified by the --backup-dest-dir parameter. \n"
+                                     "The default value is 0. \n")
 
   remove_unsuccessful_group = parser.add_argument_group('Options for a "%s" action' % REMOVE_UNSUCCESSFUL_ACTION,
                                                         'Remove leftovers after a previous unsuccessful backup')
@@ -82,8 +88,7 @@ def configure_parser():
 
 def validate_args(args):
   if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
-    raise ValueError("--remove-file option is valid only for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
-  # TODO: add other restrictions
+    raise ValueError("--remove-file option is only valid for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
 
 
 def generate_name(args):
@@ -100,9 +105,8 @@ def generate_name(args):
   error = None
   if os.path.exists(full_path):
     error = "File %s already exists\n" % full_path
-
-  if os.path.exists(args.backup_dest_dir) and not os.path.isdir(args.backup_dest_dir):
-    error = "--backup-dest-dir argument points to existing file %s that is not a directory\n" % args.backup_dest_dir
+  elif os.path.exists(args.backup_dest_dir) and not os.path.isdir(args.backup_dest_dir):
+    error = "--backup-dest-dir argument points to an existing file %s that is not a directory\n" % args.backup_dest_dir
 
   if error:
     full_path = "/dev/null"  # a safeguard against breaking substitution logic at shell scripts
@@ -116,60 +120,101 @@ def generate_name(args):
 
 
 def auto_clean(args):
-  # TODO: if the dest directory does not exist, exit
-  # TODO: print stats on backup files
+  if not os.path.isdir(args.backup_dest_dir):
+    msg = "Path %s is not a directory" % args.backup_dest_dir
+    return msg, 1
+
+  backups = _list_backup_files(args)
+  files_to_preserve = _choose_valuable_backups(backups, args)
+
+  stdout = []
+  backups_to_remove = [backup for backup in backups if backup not in files_to_preserve]
+  for backup in backups_to_remove:
+    if backup not in files_to_preserve:
+      if args.dry_mode:
+        stdout.append("Would remove old backup %s" % backup[FILENAME])
+      else:
+        stdout.append("Removing old backup %s" % backup[FILENAME])
+        os.remove(backup[PATH])
+  if not args.dry_mode:
+    stdout.append("Removed %s old backup files." % len(backups_to_remove))
+  return "\n".join(stdout), 0
+
+
+def _list_backup_files(args):
+  """
+  Lists backup files at a directory.
+  :param args: application args
+  :return: a list of backups sorted ascending by timestamps, e.g. the most recent backup is last
+  """
+  result = []
+  # Regex of expected filename
+  regex_str = '^%s__(20\\d{6}_\\d{6})%s$' % (re.escape(args.prefix), re.escape(args.extension))
+  regex = re.compile(regex_str)
+
+  for filename in os.listdir(args.backup_dest_dir):
+    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), filename)
+    if not os.path.isfile(full_path):
+      continue
+    match = re.search(regex, filename)
+    if not match:
+      continue
+    date_str = match.group(1)
+    file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
+    entry = {
+      PATH: full_path,
+      FILENAME: filename,
+      TIMESTAMP: file_time.timestamp()
+    }
+    result.append(entry)
+  return sorted(result, key=lambda item: item[TIMESTAMP])
+
+
+def _choose_valuable_backups(backups, args):
+  """
+  :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
+  :return: a list of backups that are valuable and should be preserved
+  """
+
   # TODO: sparingly balance daily, weekly and monthly backups between periods
+  # TODO: cleanup lists to follow limits and distribute uniformly
 
-  # TODO: populate list of backups
-  ## TODO: populate timestamps according to filename
-  entry = {
-    "path": "",
-    "timestamp": 4343,
-    "position_rating": 0,
-    "overall_rating": 0,
-  }
-  backups = []
+  # entry = {
+  #   "path": "",
+  #   "timestamp": 4343,
+  #   "position_rating": 0,
+  #   "overall_rating": 0,
+  # }
 
-  # TODO: fix syntax
+  result = []
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
+  max_count = args.daily_backups_max_count + args.weekly_backups_max_count + \
+      args.monthly_backups_max_count + args.yearly_backups_max_count
+  for backup in reversed(yearly_backups + monthly_backups + weekly_backups + daily_backups):
+    if len(result) >= max_count:
+      break
+    result.append(backup)
+  result.reverse()
+  return result
+
+
+def _split_backups(backups):
   daily_backups = []
   weekly_backups = []
   monthly_backups = []
   yearly_backups = []
+  now_timestamp = datetime.now().timestamp()
+  day_seconds = 24 * 3600
   for backup in backups:
-    if backup["date"] >= now - 7:
+    if backup[TIMESTAMP] >= now_timestamp - 7 * day_seconds:
       daily_backups.append(backup)
-    elif now - 7 > backup["date"] >= now - 31:
+    elif now_timestamp - 7 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 31 * day_seconds:
       weekly_backups.append(backup)
-    elif now - 31 > backup["date"] >= now - 365:
+    elif now_timestamp - 31 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 365 * day_seconds:
       monthly_backups.append(backup)
-    elif now - 365 > backup["date"]:
+    elif now_timestamp - 365 * day_seconds > backup[TIMESTAMP]:
       yearly_backups.append(backup)
-
-  # TODO: filter each list according to periods
-  # TODO: remove
-
-  # TODO: cleanup lists to follow limits and distribute uniformly
-
-  # TODO: instead of these src lists, add filtered lists
-  files_to_preserve = daily_backups + weekly_backups + monthly_backups + yearly_backups
-  for backup in backups:
-    if backup not in files_to_preserve:
-      print("Removing old backup %s" % backup)
-      os.remove(backup["path"])
-
-
-def filter_list_according_to_limit(src_list, max_entries, start_timestamp, end_timestamp):
-  """
-
-  :param src_list: source list of backups
-  :param max_entries: the maximum number of entries that may be preserved in a list
-  :param start_timestamp: timestamp when time period starts 
-  :param end_timestamp: timestamp when time period ends
-  :return: a list of backups that should be preserved
-  """
-  result = []
-
-  return result
+  return daily_backups, weekly_backups, monthly_backups, yearly_backups
 
 
 def remove_unsuccessful(args):
@@ -210,15 +255,15 @@ def main():
   validate_args(args)
 
   exit_code = 0
+  stdout = ''
   if args.action == GENERATE_NAME_ACTION:
-    generated_name, exit_code = generate_name(args)
-    print(generated_name)
+    stdout, exit_code = generate_name(args)
   elif args.action == AUTO_CLEAN_ACTION:
-    generated_name, exit_code = auto_clean(args)
+    stdout, exit_code = auto_clean(args)
   elif args.action == REMOVE_UNSUCCESSFUL_ACTION:
-    output, exit_code = remove_unsuccessful(args)
-    print(output)
+    stdout, exit_code = remove_unsuccessful(args)
   # There can not be another value thanks to argparse validation
+  print(stdout)
   sys.exit(exit_code)
 
 
