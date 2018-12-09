@@ -39,8 +39,7 @@ def configure_parser():
 
   auto_clean_group = parser.add_argument_group('Options for an "%s" action' % AUTO_CLEAN_ACTION,
                                                'Auto-clean old backup files')
-  auto_clean_group.add_argument("--dry-mode", type=int, default=7,
-                                help="Don't perform any actions. Just show what would be done \n")
+  auto_clean_group.add_argument("--dry-mode", help="Don't perform any actions. Just show what would be done \n")
   auto_clean_group.add_argument("--daily-backups-max-count", type=int, default=5,
                                 help="Max number of daily backups (performed during last 7 days) that can be \n"
                                      "stored at a location specified by the --backup-dest-dir parameter. \n"
