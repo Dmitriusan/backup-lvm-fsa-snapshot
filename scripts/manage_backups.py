@@ -126,7 +126,7 @@ def auto_clean(args):
     return msg, 1
 
   backups = _list_backup_files(args)
-  files_to_preserve = _chose_valuable_backups(backups, args)
+  files_to_preserve = _choose_valuable_backups(backups, args)
 
   stdout = []
   backups_to_remove = [backup for backup in backups if backup not in files_to_preserve]
@@ -171,7 +171,7 @@ def _list_backup_files(args):
   return sorted(result, key=lambda item: item[TIMESTAMP])
 
 
-def _chose_valuable_backups(backups, args):
+def _choose_valuable_backups(backups, args):
   """
   :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
   :return: a list of backups that are valuable and should be preserved
