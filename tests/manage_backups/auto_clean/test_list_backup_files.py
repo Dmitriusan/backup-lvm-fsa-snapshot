@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from manage_backups import _list_backup_files
+import manage_backups
 
 
 def test_should_build_a_sorted_list(mocker):
@@ -21,7 +21,7 @@ def test_should_build_a_sorted_list(mocker):
   isfile_mock.return_value = True
 
   # Run method under test
-  result = _list_backup_files(args)
+  result = manage_backups._list_backup_files(args)
 
   # Assertions
   assert result == [
@@ -57,7 +57,7 @@ def test_should_skip_dirs(mocker):
   isfile_mock.return_value = False
 
   # Run method under test
-  result = _list_backup_files(args)
+  result = manage_backups._list_backup_files(args)
 
   # Assertions
   assert result == []
