@@ -34,12 +34,26 @@ def test_should_return_limited_number_of_backups(mocker):
 
   assert len(chosen_backups) == expected_number_of_chosen_backups
   assert chosen_backups == [
-
+    {
+      'FILENAME': 'sample_file_20181014_031512',
+      'PATH': '/path/to/backups/sample_file_20181014_031512',
+      'TIMESTAMP': 1539476112.0},
+    {
+      'FILENAME': 'sample_file_20181023_022501',
+      'PATH': '/path/to/backups/sample_file_20181023_022501',
+      'TIMESTAMP': 1540250701.0},
+    {
+      'FILENAME': 'sample_file_20181106_011417',
+      'PATH': '/path/to/backups/sample_file_20181106_011417',
+      'TIMESTAMP': 1541459657.0},
+    {
+      'FILENAME': 'sample_file_20181110_031511',
+      'PATH': '/path/to/backups/sample_file_20181110_031511',
+      'TIMESTAMP': 1541812511.0},
     {
       'FILENAME': 'sample_file_20181113_031512',
       'PATH': '/path/to/backups/sample_file_20181113_031512',
-      'TIMESTAMP': 1542071712.0
-    },
+      'TIMESTAMP': 1542071712.0}
   ]
 
 
