@@ -48,7 +48,7 @@ def test_positive_flow(mocker):
 
   mocker.patch('manage_backups.os.path.isdir', return_value=True)
   list_backup_files_mock = mocker.patch('manage_backups._list_backup_files', return_value = list_of_backups)
-  filter_backups_according_to_limits_mock = mocker.patch('manage_backups._filter_backups_according_to_limits',
+  filter_backups_according_to_limits_mock = mocker.patch('manage_backups._chose_valuable_backups',
                                                          return_value=files_that_should_be_preserved)
   remove_mock = mocker.patch('manage_backups.os.remove')
 
@@ -97,7 +97,7 @@ def test_should_not_perform_actions_in_dry_mode(mocker):
 
   mocker.patch('manage_backups.os.path.isdir', return_value=True)
   list_backup_files_mock = mocker.patch('manage_backups._list_backup_files', return_value = list_of_backups)
-  filter_backups_according_to_limits_mock = mocker.patch('manage_backups._filter_backups_according_to_limits',
+  filter_backups_according_to_limits_mock = mocker.patch('manage_backups._chose_valuable_backups',
                                                          return_value=files_that_should_be_preserved)
   remove_mock = mocker.patch('manage_backups.os.remove')
 

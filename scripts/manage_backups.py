@@ -126,7 +126,7 @@ def auto_clean(args):
     return msg, 1
 
   backups = _list_backup_files(args)
-  files_to_preserve = _filter_backups_according_to_limits(backups, args)
+  files_to_preserve = _chose_valuable_backups(backups, args)
 
   stdout = []
   backups_to_remove = [backup for backup in backups if backup not in files_to_preserve]
@@ -171,29 +171,30 @@ def _list_backup_files(args):
   return sorted(result, key=lambda item: item[TIMESTAMP])
 
 
-def _filter_backups_according_to_limits(backups, args):
+def _chose_valuable_backups(backups, args):
   """
   :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
-  :return: a list of backups that should be preserved
+  :return: a list of backups that are valuable and should be preserved
   """
-  # TODO: move to some other method
-  # :param max_entries: the maximum number of entries that may be preserved in a list
-  # :param start_timestamp: timestamp when time period starts
-  # :param end_timestamp: timestamp when time period ends
-  # TODO: filter each list according to periods
 
-  result = []
-  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
   # TODO: sparingly balance daily, weekly and monthly backups between periods
-
   # TODO: cleanup lists to follow limits and distribute uniformly
-  ## TODO: populate timestamps according to filename
+
   # entry = {
   #   "path": "",
   #   "timestamp": 4343,
   #   "position_rating": 0,
   #   "overall_rating": 0,
   # }
+
+  result = []
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
+  max_count = args.daily_backups_max_count + args.weekly_backups_max_count + \
+      args.monthly_backups_max_count + args.yearly_backups_max_count
+  for backup in reversed(yearly_backups + daily_backups + weekly_backups + yearly_backups):
+    if len(result) >= max_count:
+      break
+    result.append(backup)
 
   return result
 
