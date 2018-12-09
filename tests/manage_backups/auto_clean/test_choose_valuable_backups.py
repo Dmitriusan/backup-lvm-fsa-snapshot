@@ -27,7 +27,7 @@ def test_should_return_limited_number_of_backups(mocker):
     create_entry("20181113_031512")
   ]
   expected_number_of_chosen_backups = args.daily_backups_max_count + args.weekly_backups_max_count + \
-                                      args.monthly_backups_max_count + args.yearly_backups_max_count
+      args.monthly_backups_max_count + args.yearly_backups_max_count
 
 
   # Run method under test
