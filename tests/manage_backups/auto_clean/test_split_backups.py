@@ -11,7 +11,7 @@ def test_should_split_backups_by_periods(mocker):
   """
   # Configuration
   datetime_mock = mocker.patch('manage_backups.datetime')
-  datetime_mock.now = mocker.Mock(return_value=datetime(2018, 11, 14, 3, 14, 1).timestamp())
+  datetime_mock.now = mocker.Mock(return_value=datetime(2018, 11, 14, 3, 14, 1))
 
   expected_yearly_backups = [
     create_entry("20171114_031512"),
