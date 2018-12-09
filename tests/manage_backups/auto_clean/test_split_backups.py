@@ -14,13 +14,16 @@ def test_should_split_backups_by_periods(mocker):
   datetime_mock.now = mocker.Mock(return_value=datetime(2018, 11, 14, 3, 14, 1))
 
   expected_yearly_backups = [
-    create_entry("20171114_031512"),
-  ]
-  expected_monthly_backups = [
     create_entry("20170312_041112"),
   ]
-  expected_weekly_backups = [
+  expected_monthly_backups = [
+    create_entry("20171114_031512"),
+    create_entry("20180407_031512"),
     create_entry("20181014_031512"),
+  ]
+  expected_weekly_backups = [
+    create_entry("20181023_022501"),
+    create_entry("20181106_011417"),
   ]
   expected_daily_backups = [
     create_entry("20181110_031511"),
