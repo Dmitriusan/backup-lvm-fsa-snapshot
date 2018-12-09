@@ -32,6 +32,7 @@ def test_should_return_limited_number_of_backups(mocker):
   # Run method under test
   chosen_backups = manage_backups._choose_valuable_backups(list_of_backups, args)
 
+  # Assertions
   assert len(chosen_backups) == expected_number_of_chosen_backups
   assert chosen_backups == [
     {
@@ -81,6 +82,8 @@ def test_should_work_with_small_list(mocker):
 
   # Run method under test
   chosen_backups = manage_backups._choose_valuable_backups(list_of_backups, args)
+
+  # Assertions
   assert chosen_backups == list_of_backups
 
 
