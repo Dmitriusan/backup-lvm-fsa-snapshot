@@ -206,7 +206,7 @@ def _split_backups(backups):
   now_timestamp = datetime.now().timestamp()
   day_millis = 24 * 3600 * 1000
   for backup in backups:
-    if backup[TIMESTAMP] >= now_timestamp - 7 * day_millis:
+    if backup[TIMESTAMP] >= (now_timestamp - 7 * day_millis):
       daily_backups.append(backup)
     elif now_timestamp - 7 * day_millis > backup[TIMESTAMP] >= now_timestamp - 31 * day_millis:
       weekly_backups.append(backup)

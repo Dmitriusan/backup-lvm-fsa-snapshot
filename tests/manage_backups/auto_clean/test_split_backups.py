@@ -40,7 +40,7 @@ def test_should_split_backups_by_periods(mocker):
 
 def create_entry(datetime_str):
   timestamp = datetime.strptime(datetime_str, '%Y%m%d_%H%M%S').timestamp()
-  sample_filename = "sample_file" + str(timestamp)
+  sample_filename = "sample_file_" + datetime_str
   return {
     PATH: os.path.join("/path/to/backups", sample_filename),
     FILENAME: sample_filename,
