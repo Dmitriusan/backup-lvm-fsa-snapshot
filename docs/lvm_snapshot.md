@@ -1,61 +1,79 @@
 # lvm_snaphot.py
-This script can create and remove the LVM snapshot. 
-<!-- TODO: --> Write description
+This script can create and remove the LVM snapshot. It can also add a temporary file into an LVM volume group, 
+to provide additional space for snapshot. Script also performs many checks before doing 
+serious things, and tries to carefully cleanup everything or at least fail fast if something goes wrong.
 
-
-##  What this script does
-
-- Script also performs necessary checks (more then 20) before doing serious things, and tries to carefully cleanup things
- if previous script invocation failed.
-  
-
-<!-- TODO: -->
-- Script installs fsarchiver or pigz package if it is required and not installed
-- Script creates destination directory at --backup-dest-dir for storing backups 
-if it does not exist 
-- Script creates 4096 mb tmp file (use --snapshot-volume-size-mb to customize) 
-in directory, specified via --lvm-snapshot-tmp-file-dir . 
-If arg --tmp-dir-is-local is specified,
- file is created using fallocate call (fast, but applicable only to local filesystem). 
- Otherwise, if --tmp-dir-is-remote parameter is passed, temporary file is created 
- using dd. Alternatively, if --tmp-dir-is-lvm parameter is passed, creating temporary file 
- is skipped and lvm spare space is used.
-- Then script creates a loop device on tmp file allocated earlier (if not --tmp-dir-is-lvm)
-- Then (if not --tmp-dir-is-lvm) script creates an LVM physical volume for volume group specified via --source-lvm-volume-group.
- Physical volume is created on the loop device created beforehand.
-- Then script creates an LVM snapshot for LVM logical volume specified via 
- --source-lvm-volume-group and --source-lvm-logical-volume options. Size of volume defaults to
-4096 mb and can be customized via --snapshot-volume-size-mb. 
-- Then script creates a dump of snapshot volume. Backup is created via fsarchiver. 
-Backup is compressed, compression uses all available CPUs, compression levels 
-(see http://www.fsarchiver.org/Compression) are defined using --compression-level
- parameter.
-- every Sunday, a weekly dump is created. On other days a daily dump is created.
- Limits of weekly and daily dump files are managed separately and 
- are defined using --daily-backup-max-count and
- --weekly-backup-max-count properties. Oldest dump files that exceed this limit are deleted.
- E.g. 7 daily backups and 4 weekly backups mean that one has daily backups for the last week
- and weekly backups for the last month. 
-- After backup is finished, script removes physical volume, loop device and tmp file created earlier.
-- Then script removes old dumps (exceeding limits specified via --daily-backup-max-count 
- and --weekly-backup-max-count
- 
- 
-## Typical usage examples
-
-### Adding a temporary file to LVM volume to use as an additional storage
-* Allocate a temporary file and mount it to a loop device. By default, a 4GB temporary file is allocated. Then, create 
-snapshot of an LVM partition and mount it to mountpoint. 
+## Typical usage
+Command lines listed below cover the most typical cases. For other cases, refer to script help output.
+### Getting help output
 ```bash
-lvm_snaphot.py --source-lvm-vg my_lvm_vg --source-lvm-lv system --lvm-snapshot-name snap1 \
-    --mountpoint  /media/system_snapshot \
-    --lvm-snapshot-tmp-file /media/other-partition/1.tmp --use-fallocate --loop-device /dev/loop5
+lvm_snaphot.py -h
+```
+### Creating snapshot
+* To create LVM snapshot using free space at LVM volume group and mount the snapshot to the mountpoint:
+```bash
+lvm_snaphot.py --source-lvm-vg lvm_server_vg --source-lvm-lv system \
+  --lvm-snapshot-name snap1 --mountpoint /media/system_snapshot \
+  snapshot-mount
+```
+* To: 
+  * create a temporary file at /media/other_partition/tmp_space.tmp
+    * default temporary file size is 4GB, use the `--lvm-volume-size-mb` option to customize it
+    * by default, `dd` tool is used to create a file. Check the `--use-fallocate` option that is better in many cases  
+  * mount the temporary file to the loop device /dev/loop5
+  * add this loop device as a physical volume to the LVM group
+  * use the united free space of LVM volume to create an LVM snapshot
+  * mount the snapshot to the mountpoint
+```bash
+lvm_snaphot.py --source-lvm-vg lvm_server_vg --source-lvm-lv system \
+                 --lvm-snapshot-name snap1 --mountpoint /media/system_snapshot \
+                 --lvm-snapshot-tmp-file /media/other_partition/tmp_space.tmp --loop-device /dev/loop5 \
+                 snapshot-mount
 ```
 
-* unmount the snapshot from a mountpoint and remove the snapshot and mountpoint directory
+### Removing snapshot
+When removing a snapshot, always specify all options passed to `snapshot-mount`. That is required for proper
+cleanup in non-trivial cases (like allocated temporary file).
+* To unmount the snapshot from the mountpoint, and remove both mountpoint and snapshot:
 ```bash
-lvm_snaphot.py --source-lvm-vg my_lvm_vg --source-lvm-lv system --lvm-snapshot-name snap1 \
-    --mountpoint  /media/system_snapshot \
-    --lvm-snapshot-tmp-file /media/other-partition/1.tmp --use-fallocate --loop-device /dev/loop5 \
-    --remove-mountpoint 
+lvm_snaphot.py --source-lvm-vg lvm_server_vg --source-lvm-lv system \
+  --lvm-snapshot-name snap1 --mountpoint /media/system_snapshot \
+  --remove-mountpoint snapshot-unmount
+```
+* To:
+  * unmount the snapshot from the mountpoint
+  * remove the mountpoint /media/system_snapshot
+  * remove snapshot from an LVM group
+  * remove the loop device /dev/loop5 from an LVM group
+  * unmount the temporary file from the loop device /dev/loop5
+  * remove the temporary file /media/other_partition/tmp_space.tmp
+```bash
+lvm_snaphot.py --source-lvm-vg lvm_server_vg --source-lvm-lv system \
+                 --lvm-snapshot-name snap1 --mountpoint /media/system_snapshot \
+                 --lvm-snapshot-tmp-file /media/other_partition/tmp_space.tmp --loop-device /dev/loop5 \
+                 --remove-mountpoint snapshot-unmount
+``` 
+### Template of a backup script that uses LVM snapshots
+```bash
+#!/usr/bin/env bash
+# Path to a local clone of backup-lvm-fsa-snapshot repository
+PATH_TO_BACKUP_TOOLS_REPO="$1"
+
+# Mountpoint where filesystem from a snapshot is mounted
+SYSTEM_SNAPSHOT="/media/system_snapshot_mountpoint"
+LVM_SNAPSHOT_MOUNT_OPTS="--source-lvm-vg lvm_server_vg --source-lvm-lv system --lvm-snapshot-name snap1 --mountpoint ${SYSTEM_SNAPSHOT}"
+LVM_SNAPSHOT_UNMOUNT_OPTS="$LVM_SNAPSHOT_MOUNT_OPTS --remove-mountpoint"
+
+echo "Creating snapshot of LVM partition"
+
+set -e
+python3 ${PATH_TO_BACKUP_TOOLS_REPO}/scripts/lvm_snaphot.py ${LVM_SNAPSHOT_MOUNT_OPTS}  snapshot-mount
+
+# HERE: Perform the backup of files available at $SYSTEM_SNAPSHOT. Make sure you script exit code correctly 
+# and snapshot-unmount action is always executed
+
+echo "Removing snapshot of LVM partition"
+${PATH_TO_BACKUP_TOOLS_REPO}/scripts/lvm_snaphot.py ${LVM_SNAPSHOT_UNMOUNT_OPTS} --remove-mountpoint snapshot-unmount
+
+set +e
 ```

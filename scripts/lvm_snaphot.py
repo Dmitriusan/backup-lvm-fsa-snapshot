@@ -23,10 +23,10 @@ def configure_parser():
     parser.add_argument('-v', '--verbose', action="count",
                         help="controls verbosity. May be specified multiple times")
 
-    lvm_group = parser.add_argument_group("LVM snapshot", "Options related to LVM and LVM snapshot")
+    lvm_group = parser.add_argument_group("Loop device, temporary file and LVM snapshot options")
     lvm_group.add_argument("--lvm-volume-size-mb", type=int, default=4096,
                            help="Size of LVM snapshot volume in megabytes (default is 4096). This space is used "
-                                "only for storing changes that are written to the source volume while snapshot exists. "
+                                "only to store changes that are written to the source volume while snapshot exists. "
                                 "If this space is exhausted, snapshot disappears.")
     lvm_group.add_argument("--source-lvm-vg", type=str, required=True,
                            help="Name of LVM volume group")
@@ -35,25 +35,24 @@ def configure_parser():
     lvm_group.add_argument("--lvm-snapshot-name", type=str, required=True,
                            help="Name of LVM snapshot")
     lvm_group.add_argument("--lvm-snapshot-tmp-file", type=str,
-                           help="Use if LVM volume has not enough unallocated space to create snapshot of a requested "
-                                "size. A temporary file will be created at this path, and it will be mounted "
-                                "as a loop device. This loop device will then be added as a physical volume into "
-                                "a source volume group. When unmounting (or after unsuccessful mount), "
+                           help="Use this option if LVM volume has no enough unallocated space to create a snapshot."
+                                "A temporary file will be created at this path, and it will be mounted "
+                                "on a loop device. This loop device will then be added as a physical volume into "
+                                "the same volume group. During snapshot unmount (or after unsuccessful mount), "
                                 "the physical volume, loop device and temporary file will be attempted to be removed. "
                                 "This option should be specified during unmount as well. Option should be always used "
                                 "in conjunction with --loop-device option. Consider also --use-fallocate flag."
                                 "WARNING: Never specify path that is located on a logical volume being snapshoted,"
-                                "otherwise the filesystem will hang when snapshot is created")
+                                "otherwise the entire filesystem will hang during snapshot creation")
     lvm_group.add_argument("--loop-device", type=str,
-                           help="Full path to loop device. Valid only if --lvm-snapshot-tmp-file option is specified. "
-                                "Loop device should already exist")
+                           help="Full path to the loop device. Valid only if --lvm-snapshot-tmp-file option "
+                                "is specified. Loop device should already exist")
     lvm_group.add_argument("--use-fallocate", action="store_true",
                            help="Matters only when --lvm-snapshot-tmp-dir option is used. If specified, uses "
                                 "'fallocate' method to create a temporary file. That is faster then dd command that is "
-                                "used by default, but works only on some filesystems (e.g. local ext4). "
-                                "Valid only for %s action" % SNAPSHOT_MOUNT_ACTION)
+                                "used by default, but works only on some filesystems (e.g. local ext4). ")
 
-    backup_group = parser.add_argument_group("Mounting and unmounting", "Options related to mount stage")
+    backup_group = parser.add_argument_group("Mounting and unmounting", "Mount stage options")
     backup_group.add_argument("--mountpoint", type=str, required=True,
                               help="Target directory for snapshot mount. If it does not exist, it will be created.")
     backup_group.add_argument("--remove-mountpoint", action="store_true",
@@ -85,10 +84,6 @@ def validate_args(args):
         # Quick validation
         if args.remove_mountpoint:
             raise ValueError("--remove-mountpoint flag is not applicable during mount")
-    elif args.action == SNAPSHOT_UNMOUNT_ACTION:
-        # Quick validation
-        if args.use_fallocate:
-            raise ValueError("--use-fallocate flag is not applicable during unmount")
     else:
         raise ValueError("Unknown action %s" % args.action)
 
@@ -416,9 +411,6 @@ def main():
         raise EnvironmentError("This script requires root permissions, effective user id=%s" % os.geteuid())
 
     if args.action == SNAPSHOT_MOUNT_ACTION:
-        # Quick validation
-        if args.remove_mountpoint:
-            raise ValueError("--remove-mountpoint flag is not applicable during mount")
         try:
             mount_snapshot(args)
         except Exception as e:
@@ -426,9 +418,6 @@ def main():
             unmount_snapshot(args)
             raise e
     elif args.action == SNAPSHOT_UNMOUNT_ACTION:
-        # Quick validation
-        if args.use_fallocate:
-            raise ValueError("--use-fallocate flag is not applicable during unmount")
         unmount_snapshot(args)
 
 
