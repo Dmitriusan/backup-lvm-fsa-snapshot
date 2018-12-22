@@ -84,6 +84,8 @@ def validate_args(args):
         # Quick validation
         if args.remove_mountpoint:
             raise ValueError("--remove-mountpoint flag is not applicable during mount")
+    elif args.action == SNAPSHOT_UNMOUNT_ACTION:
+        pass
     else:
         raise ValueError("Unknown action %s" % args.action)
 
