@@ -20,6 +20,7 @@ POSITION_RATING = "POSITION_RATING"
 OVERALL_RATING = "OVERALL_RATING"
 
 
+# region Argument parsing
 def configure_parser():
   parser = argparse.ArgumentParser(
     description='This script is intended for managing auto-created backup files. It can generate a filename, and '
@@ -89,8 +90,10 @@ def configure_parser():
 def validate_args(args):
   if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
     raise ValueError("--remove-file option is only valid for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
+# endregion
 
 
+# region Name generation
 def generate_name(args):
   """
 
@@ -117,8 +120,10 @@ def generate_name(args):
     os.makedirs(args.backup_dest_dir)
 
   return full_path, 0
+# endregion
 
 
+# region Auto clean
 def auto_clean(args):
   if not os.path.isdir(args.backup_dest_dir):
     msg = "Path %s is not a directory" % args.backup_dest_dir
@@ -215,8 +220,10 @@ def _split_backups(backups):
     elif now_timestamp - 365 * day_seconds > backup[TIMESTAMP]:
       yearly_backups.append(backup)
   return daily_backups, weekly_backups, monthly_backups, yearly_backups
+# endregion
 
 
+# region Remove unsuccessful
 def remove_unsuccessful(args):
   # Perform paranoic checks
   if not os.path.exists(args.remove_file):
@@ -245,6 +252,7 @@ def remove_unsuccessful(args):
   # If all checks passed, remove the file
   os.remove(args.remove_file)
   return "Removed %s" % args.remove_file, 0
+# endregion
 
 
 def main():
