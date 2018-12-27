@@ -192,7 +192,7 @@ def _choose_valuable_backups(backups, args):
   # }
 
   result = []
-  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups(backups)
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups_by_time_periods(backups)
   max_count = args.daily_backups_max_count + args.weekly_backups_max_count + \
       args.monthly_backups_max_count + args.yearly_backups_max_count
   for backup in reversed(yearly_backups + monthly_backups + weekly_backups + daily_backups):
@@ -203,7 +203,7 @@ def _choose_valuable_backups(backups, args):
   return result
 
 
-def _split_backups(backups):
+def _split_backups_by_time_periods(backups):
   daily_backups = []
   weekly_backups = []
   monthly_backups = []

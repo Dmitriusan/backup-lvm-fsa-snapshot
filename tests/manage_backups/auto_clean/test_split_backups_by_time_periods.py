@@ -5,7 +5,7 @@ from manage_backups import PATH, FILENAME, TIMESTAMP
 import manage_backups
 
 
-def test_should_split_backups_by_periods(mocker):
+def test_should_split_backups_by_time_periods(mocker):
   """
   Checks that method splits list of backups according to time periods
   """
@@ -32,7 +32,7 @@ def test_should_split_backups_by_periods(mocker):
   backups = expected_yearly_backups + expected_monthly_backups + expected_weekly_backups + expected_daily_backups
 
   # Run method under test
-  daily_backups, weekly_backups, monthly_backups, yearly_backups = manage_backups._split_backups(backups)
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = manage_backups._split_backups_by_time_periods(backups)
 
   # Assertions
   assert daily_backups == expected_daily_backups
