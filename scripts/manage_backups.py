@@ -166,13 +166,9 @@ def _list_backup_files(args):
       continue
     date_str = match.group(1)
     file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
-    entry = {
-      PATH: full_path,
-      FILENAME: filename,
-      TIMESTAMP: file_time.timestamp()
-    }
-    result.append(entry)
-  return sorted(result, key=lambda item: item[TIMESTAMP])
+    backup = Backup(full_path, filename, file_time.timestamp())
+    result.append(backup)
+  return sorted(result, key=lambda item: item.timestamp)
 
 
 def _choose_valuable_backups(backups, args):
@@ -225,6 +221,15 @@ def _split_backups_by_time_periods(backups):
     elif now_timestamp - 365 * day_seconds > backup[TIMESTAMP]:
       yearly_backups.append(backup)
   return daily_backups, weekly_backups, monthly_backups, yearly_backups
+
+
+class Backup:
+  def __init__(self, path, filename, timestamp):
+    self.path = path
+    self.filename = filename
+    self.timestamp = timestamp
+    self.position_rating = 0
+    self.overall_rating = 0
 # endregion
 
 
