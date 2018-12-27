@@ -23,8 +23,8 @@ OVERALL_RATING = "OVERALL_RATING"
 # region Argument parsing
 def configure_parser():
   parser = argparse.ArgumentParser(
-    description='This script is intended for managing auto-created backup files. It can generate a filename, and '
-                'auto-clean old backup files according to configured limits.',
+    description='This script is intended for managing auto-created regular backup files. It can generate a filename, '
+                'and auto-clean old backup files according to configured limits.',
     epilog='Use at your own risk',
     formatter_class=argparse.RawTextHelpFormatter
   )
@@ -204,6 +204,11 @@ def _choose_valuable_backups(backups, args):
 
 
 def _split_backups_by_time_periods(backups):
+  """
+  Splits list of backups into separate lists of time periods (last 7 days, last 31 day, last 365 days, other)
+  :param backups: list of backups, sorted asc by timestamp
+  :return: tuple of (daily_backups, weekly_backups, monthly_backups, yearly_backups), sorted asc by timestamp
+  """
   daily_backups = []
   weekly_backups = []
   monthly_backups = []
