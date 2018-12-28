@@ -202,6 +202,8 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   number of resuls and the actual number of results.
   """
   # TODO: implement
+  _split_buckets()
+  apply_positional_rating_correction()
   return [], 0
 
 
