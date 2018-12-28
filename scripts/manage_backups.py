@@ -12,15 +12,9 @@ REMOVE_UNSUCCESSFUL_ACTION = 'remove-unsuccessful'
 
 DATE_STRING_FORMAT = '%Y%m%d_%H%M%S'
 
-# Constant strings for dict
-PATH = "PATH"
-FILENAME = "FILENAME"
-TIMESTAMP = "TIMESTAMP"
-POSITION_RATING = "POSITION_RATING"
-OVERALL_RATING = "OVERALL_RATING"
-
 
 # region Argument parsing
+
 def configure_parser():
   parser = argparse.ArgumentParser(
     description='This script is intended for managing auto-created regular backup files. It can generate a filename, '
@@ -137,38 +131,13 @@ def auto_clean(args):
   for backup in backups_to_remove:
     if backup not in files_to_preserve:
       if args.dry_mode:
-        stdout.append("Would remove old backup %s" % backup[FILENAME])
+        stdout.append("Would remove old backup %s" % backup.filename)
       else:
-        stdout.append("Removing old backup %s" % backup[FILENAME])
-        os.remove(backup[PATH])
+        stdout.append("Removing old backup %s" % backup.filename)
+        os.remove(backup.path)
   if not args.dry_mode:
     stdout.append("Removed %s old backup files." % len(backups_to_remove))
   return "\n".join(stdout), 0
-
-
-def _list_backup_files(args):
-  """
-  Lists backup files at a directory.
-  :param args: application args
-  :return: a list of backups sorted ascending by timestamps, e.g. the most recent backup is last
-  """
-  result = []
-  # Regex of expected filename
-  regex_str = '^%s__(20\\d{6}_\\d{6})%s$' % (re.escape(args.prefix), re.escape(args.extension))
-  regex = re.compile(regex_str)
-
-  for filename in os.listdir(args.backup_dest_dir):
-    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), filename)
-    if not os.path.isfile(full_path):
-      continue
-    match = re.search(regex, filename)
-    if not match:
-      continue
-    date_str = match.group(1)
-    file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
-    backup = Backup(full_path, filename, file_time.timestamp())
-    result.append(backup)
-  return sorted(result, key=lambda item: item.timestamp)
 
 
 def _choose_valuable_backups(backups, args):
@@ -176,60 +145,86 @@ def _choose_valuable_backups(backups, args):
   :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
   :return: a list of backups that are valuable and should be preserved
   """
-
-  # TODO: sparingly balance daily, weekly and monthly backups between periods
-  # TODO: cleanup lists to follow limits and distribute uniformly
-
-  # entry = {
-  #   "path": "",
-  #   "timestamp": 4343,
-  #   "position_rating": 0,
-  #   "overall_rating": 0,
-  # }
-
   result = []
-  daily_backups, weekly_backups, monthly_backups, yearly_backups = _split_backups_by_time_periods(backups)
-  max_count = args.daily_backups_max_count + args.weekly_backups_max_count + \
-      args.monthly_backups_max_count + args.yearly_backups_max_count
-  for backup in reversed(yearly_backups + monthly_backups + weekly_backups + daily_backups):
-    if len(result) >= max_count:
-      break
-    result.append(backup)
-  result.reverse()
+  daily_bucket, weekly_bucket, monthly_bucket, yearly_bucket = _put_to_buckets_by_time_periods(backups)
+
+  carry = 0   # Vacant slots for backups that are carried to a next level
+  levels = [
+    (daily_bucket, args.daily_backups_max_count),
+    (weekly_bucket, args.weekly_backups_max_count),
+    (monthly_bucket, args.monthly_backups_max_count),
+    (yearly_bucket, args.yearly_backups_max_count)
+  ]
+  for bucket, limit in levels:
+    promoted_backups, carry = _promote_best_backups_from_bucket(bucket, limit + carry)
+    result += promoted_backups
+
   return result
 
 
-def _split_backups_by_time_periods(backups):
+def _put_to_buckets_by_time_periods(backups):
   """
-  Splits list of backups into separate lists of time periods (last 7 days, last 31 day, last 365 days, other)
+  Splits list of backups into separate buckets by time periods (last 7 days, last 31 day, last 365 days, other)
   :param backups: list of backups, sorted asc by timestamp
-  :return: tuple of (daily_backups, weekly_backups, monthly_backups, yearly_backups), sorted asc by timestamp
+  :return: tuple of (daily_backups_bucket, weekly_backups_bucket, monthly_backups_bucket, yearly_backups_bucket),
+   backups within each bucket are sorted asc by timestamp
   """
-  daily_backups = []
-  weekly_backups = []
-  monthly_backups = []
-  yearly_backups = []
-  now_timestamp = datetime.now().timestamp()
+
   day_seconds = 24 * 3600
+
+  timestamp_now = datetime.now().timestamp()
+  timestamp_7__days_ago = timestamp_now - 7 * day_seconds
+  timestamp_31_days_ago = timestamp_now - 31 * day_seconds
+  timestamp_365_days_ago = timestamp_now - 365 * day_seconds
+
+  daily_backups = Bucket(timestamp_7__days_ago, timestamp_now)
+  weekly_backups = Bucket(timestamp_31_days_ago, timestamp_7__days_ago)
+  monthly_backups = Bucket(timestamp_365_days_ago, timestamp_31_days_ago)
+  yearly_backups = Bucket(0, timestamp_365_days_ago)
+
   for backup in backups:
-    if backup[TIMESTAMP] >= now_timestamp - 7 * day_seconds:
-      daily_backups.append(backup)
-    elif now_timestamp - 7 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 31 * day_seconds:
-      weekly_backups.append(backup)
-    elif now_timestamp - 31 * day_seconds > backup[TIMESTAMP] >= now_timestamp - 365 * day_seconds:
-      monthly_backups.append(backup)
-    elif now_timestamp - 365 * day_seconds > backup[TIMESTAMP]:
-      yearly_backups.append(backup)
+    if backup.timestamp >= timestamp_7__days_ago:
+      daily_backups.put_backup(backup)
+    elif timestamp_7__days_ago > backup.timestamp >= timestamp_31_days_ago:
+      weekly_backups.put_backup(backup)
+    elif timestamp_31_days_ago > backup.timestamp >= timestamp_365_days_ago:
+      monthly_backups.put_backup(backup)
+    elif timestamp_365_days_ago > backup.timestamp:
+      yearly_backups.put_backup(backup)
   return daily_backups, weekly_backups, monthly_backups, yearly_backups
 
 
-class Backup:
-  def __init__(self, path, filename, timestamp):
-    self.path = path
-    self.filename = filename
-    self.timestamp = timestamp
-    self.position_rating = 0
-    self.overall_rating = 0
+def _promote_best_backups_from_bucket(bucket, max_number_of_results):
+  """
+  :param bucket: a bucket with backups
+  :param max_number_of_results: the maximal expected number of results
+  :return: a tuple of (list of promoted backups, vacant_places), where vacant_places is a difference between expected
+  number of resuls and the actual number of results.
+  """
+  # TODO: implement
+  return [], 0
+
+
+def _split_buckets(bucket, total_rating):
+  """
+
+  :param bucket:
+  :param total_rating:
+  :return: a list of buckets
+  """
+  # TODO: implement
+  return _split_buckets()
+
+
+def apply_positional_rating_correction(bucket):
+  """
+  Correct rating of each backup to ln(current_rating) relatively to period bounds
+  :param bucket:
+  :return:
+  """
+  # TODO: implement
+  pass
+
 # endregion
 
 
@@ -262,6 +257,86 @@ def remove_unsuccessful(args):
   # If all checks passed, remove the file
   os.remove(args.remove_file)
   return "Removed %s" % args.remove_file, 0
+# endregion
+
+
+# region Common code
+class Backup:
+  """
+  A representation of backup file on disk. Contains additional metainfo computed at runtime
+  """
+  def __init__(self, path, filename, timestamp):
+    self.path = path
+    self.filename = filename
+    self.timestamp = timestamp
+    self.position_rating = 0
+    self.overall_rating = 0
+
+  def __repr__(self):
+    return "{}({!r})".format(self.__class__.__name__, self.__dict__)
+
+  def __eq__(self, other):
+    if isinstance(other, Backup):
+      return self.path == other.path and \
+        self.filename == other.filename and \
+        self.timestamp == other.timestamp and \
+        self.position_rating == other.position_rating and \
+        self.overall_rating == other.overall_rating
+    return NotImplemented
+
+
+class Bucket:
+  """
+  A group of backups that relies to some time period.
+  """
+  def __init__(self, period_start_timestamp, period_end_timestamp, backups=None):
+    if backups is None:
+      self.backups = []
+    else:
+      self.backups = backups
+    self.period_start_timestamp = period_start_timestamp
+    self.period_end_timestamp = period_end_timestamp
+
+  def __repr__(self):
+    return "{}({!r})".format(self.__class__.__name__, self.__dict__)
+
+  def __eq__(self, other):
+    if isinstance(other, Bucket):
+      return self.backups == other.backups and \
+             self.period_start_timestamp == other.period_start_timestamp and \
+             self.period_end_timestamp == other.period_end_timestamp
+    return NotImplemented
+
+  def put_backup(self, backup):
+    self.backups.append(backup)
+
+  def get_backups(self):
+    return self.backups
+
+
+def _list_backup_files(args):
+  """
+  Lists backup files at a directory.
+  :param args: application args
+  :return: a list of backups sorted ascending by timestamps, e.g. the most recent backup is last
+  """
+  result = []
+  # Regex of expected filename
+  regex_str = '^%s__(20\\d{6}_\\d{6})%s$' % (re.escape(args.prefix), re.escape(args.extension))
+  regex = re.compile(regex_str)
+
+  for filename in os.listdir(args.backup_dest_dir):
+    full_path = os.path.join(os.path.abspath(args.backup_dest_dir), filename)
+    if not os.path.isfile(full_path):
+      continue
+    match = re.search(regex, filename)
+    if not match:
+      continue
+    date_str = match.group(1)
+    file_time = datetime.strptime(date_str, DATE_STRING_FORMAT)
+    backup = Backup(full_path, filename, file_time.timestamp())
+    result.append(backup)
+  return sorted(result, key=lambda item: item.timestamp)
 # endregion
 
 

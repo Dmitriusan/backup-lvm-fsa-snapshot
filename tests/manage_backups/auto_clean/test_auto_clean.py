@@ -1,6 +1,7 @@
-from types import SimpleNamespace
 import os
-from manage_backups import auto_clean, PATH, FILENAME, TIMESTAMP
+from types import SimpleNamespace
+
+from manage_backups import auto_clean, Backup
 
 
 def test_should_fail_if_directory_does_not_exist(mocker):
@@ -117,11 +118,8 @@ def test_should_not_perform_actions_in_dry_mode(mocker):
 
 def create_entry(args, timestamp):
   sample_filename = "sample_file" + str(timestamp)
-  return {
-    PATH: os.path.join(args.backup_dest_dir, sample_filename),
-    FILENAME: sample_filename,
-    TIMESTAMP: timestamp
-  }
+  full_path = os.path.join(args.backup_dest_dir, sample_filename)
+  return Backup(full_path, sample_filename, timestamp)
 
 
 def create_args(backup_dest_dir='/media/backups', prefix='test', extension='.tar',

@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import manage_backups
+from manage_backups import Backup
 
 
 def test_should_build_a_sorted_list(mocker):
@@ -25,21 +26,9 @@ def test_should_build_a_sorted_list(mocker):
 
   # Assertions
   assert result == [
-    {
-      'FILENAME': 'test__20181101_031401.tar',
-      'PATH': '/media/backups/test__20181101_031401.tar',
-      'TIMESTAMP': 1541034841.0
-    },
-    {
-      'FILENAME': 'test__20181102_031401.tar',
-      'PATH': '/media/backups/test__20181102_031401.tar',
-      'TIMESTAMP': 1541121241.0
-    },
-    {
-      'FILENAME': 'test__20191101_031401.tar',
-      'PATH': '/media/backups/test__20191101_031401.tar',
-      'TIMESTAMP': 1572570841.0
-    }
+    Backup('/media/backups/test__20181101_031401.tar', 'test__20181101_031401.tar', 1541034841.0),
+    Backup('/media/backups/test__20181102_031401.tar', 'test__20181102_031401.tar', 1541121241.0),
+    Backup('/media/backups/test__20191101_031401.tar', 'test__20191101_031401.tar', 1572570841.0),
   ]
 
 

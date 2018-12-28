@@ -1,11 +1,11 @@
 import os
 from datetime import datetime
 
-from manage_backups import PATH, FILENAME, TIMESTAMP
 import manage_backups
+from manage_backups import Backup
 
 
-def test_should_split_backups_by_time_periods(mocker):
+def test_should_put_to_buckets_by_time_periods(mocker):
   """
   Checks that method splits list of backups according to time periods
   """
@@ -32,7 +32,7 @@ def test_should_split_backups_by_time_periods(mocker):
   backups = expected_yearly_backups + expected_monthly_backups + expected_weekly_backups + expected_daily_backups
 
   # Run method under test
-  daily_backups, weekly_backups, monthly_backups, yearly_backups = manage_backups._split_backups_by_time_periods(backups)
+  daily_backups, weekly_backups, monthly_backups, yearly_backups = manage_backups._put_to_buckets_by_time_periods(backups)
 
   # Assertions
   assert daily_backups == expected_daily_backups
@@ -44,8 +44,5 @@ def test_should_split_backups_by_time_periods(mocker):
 def create_entry(datetime_str):
   timestamp = datetime.strptime(datetime_str, '%Y%m%d_%H%M%S').timestamp()
   sample_filename = "sample_file_" + datetime_str
-  return {
-    PATH: os.path.join("/path/to/backups", sample_filename),
-    FILENAME: sample_filename,
-    TIMESTAMP: timestamp
-  }
+  full_path = os.path.join("/path/to/backups", sample_filename),
+  return Backup(full_path, sample_filename, timestamp)
