@@ -148,15 +148,19 @@ def _choose_valuable_backups(backups, args):
   result = []
   daily_bucket, weekly_bucket, monthly_bucket, yearly_bucket = _put_to_buckets_by_time_periods(backups)
 
-  carry = 0   # Vacant slots for backups that are carried to a next level
   levels = [
     (daily_bucket, args.daily_backups_max_count),
     (weekly_bucket, args.weekly_backups_max_count),
     (monthly_bucket, args.monthly_backups_max_count),
     (yearly_bucket, args.yearly_backups_max_count)
   ]
+  carry = 0   # Vacant slots for backups that are carried to a next level
+  unused = []  # Backups that were not used on a previous level
   for bucket, limit in levels:
-    promoted_backups, carry = _promote_best_backups_from_bucket(bucket, limit + carry)
+    for unused_backup in unused:
+      unused_backup.rating = 0
+      bucket.put_backup(unused_backup)
+    promoted_backups, unused, carry = _promote_best_backups_from_bucket(bucket, limit + carry)
     result += promoted_backups
 
   return result
@@ -198,13 +202,13 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   """
   :param bucket: a bucket with backups
   :param max_number_of_results: the maximal expected number of results
-  :return: a tuple of (list of promoted backups, vacant_places), where vacant_places is a difference between expected
-  number of resuls and the actual number of results.
+  :return: a tuple of (list of promoted backups, unused_backups, vacant_places), where vacant_places is
+  a difference between expected number of resuls and the actual number of results.
   """
   # TODO: implement
   _split_buckets()
   apply_positional_rating_correction()
-  return [], 0
+  return [], [], 0
 
 
 def _split_buckets(bucket, total_rating):
@@ -272,8 +276,7 @@ class Backup:
     self.path = path
     self.filename = filename
     self.timestamp = timestamp
-    self.position_rating = 0
-    self.overall_rating = 0
+    self.rating = 0
 
   def __repr__(self):
     return "{}({!r})".format(self.__class__.__name__, self.__dict__)
@@ -283,8 +286,7 @@ class Backup:
       return self.path == other.path and \
         self.filename == other.filename and \
         self.timestamp == other.timestamp and \
-        self.position_rating == other.position_rating and \
-        self.overall_rating == other.overall_rating
+        self.rating == other.rating
     return NotImplemented
 
 
