@@ -218,7 +218,8 @@ def _split_buckets(bucket, total_rating):
 
 def apply_positional_rating_correction(bucket):
   """
-  Correct rating of each backup to ln(current_rating) relatively to period bounds
+  Correct rating of each backup to ln(current_rating) relatively to period bounds. This tends to promote
+  the most recent backups
   :param bucket:
   :return:
   """
