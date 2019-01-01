@@ -210,7 +210,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   a difference between expected number of resuls and the actual number of results.
   """
   _calculate_rating(bucket, 1.0)
-  apply_positional_rating_correction(bucket)  # TODO: merge results with other results
+  apply_positional_rating_correction(bucket)
 
   promoted_backups = []
   unused_backups = []
