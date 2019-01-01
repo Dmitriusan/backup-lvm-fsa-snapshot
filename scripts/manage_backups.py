@@ -208,7 +208,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   # TODO: implement
   # TODO define proper condition
   while True:
-    buckets = _split_buckets() # TODO: make method return a value
+    buckets = _calculate_rating() # TODO: make method return a value
     # TODO: merge buckets with previous results
   for bucket in buckets:
     apply_positional_rating_correction(bucket) # TODO: merge results with other results
@@ -216,25 +216,26 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   return [], [], 0  # TODO: return real results
 
 
-def _split_buckets(parent_bucket, total_rating):
+def _calculate_rating(parent_bucket, total_rating):
   """
   :param parent_bucket:
   :param total_rating:
-  :return: a list of buckets
+  :return: a list of backups
   """
   segments = 3  # Base number of segments on each interval
 
   draft_list_of_buckets = []
   step = (parent_bucket.period_end_timestamp - parent_bucket.period_start_timestamp) / 3
   start_timestamp = parent_bucket.period_start_timestamp
-  # Calculate a draft list of buckets (some buckets in this list may contain more than 1 backup)
+  # Compose a draft list of non-empty buckets (some buckets in this list may contain more than 1 backup)
   for i in range(0, segments):
     end_timestamp = start_timestamp + step
     current_bucket = Bucket(start_timestamp, end_timestamp)
     for backup in parent_bucket.get_backups():
       if start_timestamp <= backup.timestamp < end_timestamp:
         current_bucket.put_backup(backup)
-    draft_list_of_buckets.append(current_bucket)
+    if len(current_bucket.get_backups()) > 0:
+      draft_list_of_buckets.append(current_bucket)
     start_timestamp = end_timestamp
 
   # Calculate rating of each backup, and populate a list of results
@@ -242,10 +243,12 @@ def _split_buckets(parent_bucket, total_rating):
   for bucket in draft_list_of_buckets:
     share_of_rating = total_rating / len(draft_list_of_buckets)
     if len(bucket.get_backups()) == 1:
-      bucket.rating = share_of_rating
-      draft_list_of_buckets.append(bucket)
-    elif len(bucket.get_backups()) > 1:
-      draft_list_of_buckets += _split_buckets(bucket, share_of_rating)
+      backup = bucket.get_backups()[0]
+      backup.rating = share_of_rating
+      resulting_list_of_backups.append(backup)
+    else:
+      resulting_list_of_backups += _calculate_rating(bucket, share_of_rating)
+
   return draft_list_of_buckets
 
 
