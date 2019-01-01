@@ -261,10 +261,11 @@ def apply_positional_rating_correction(bucket):
   Correct rating of each backup relatively to period bounds. This action tends to promote the most recent backups
   :param bucket: bucket with backups
   """
+  coeff_of_importance_of_recent_backups = 2   # Defines how important are recent backups
   for backup in bucket.get_backups():
     position_coeff = (backup.timestamp - bucket.period_start_timestamp) / \
                      (bucket.period_end_timestamp - bucket.period_start_timestamp)
-    backup.rating = backup.rating * position_coeff ^ 2
+    backup.rating = backup.rating * position_coeff ^ coeff_of_importance_of_recent_backups
 
 
 # endregion
