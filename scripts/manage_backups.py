@@ -207,10 +207,8 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   """
   # TODO: implement
   # TODO define proper condition
-  _calculate_rating(bucket, 1.0) # TODO: make method return a value
-    # TODO: merge buckets with previous results
-  for bucket in buckets:
-    apply_positional_rating_correction(bucket) # TODO: merge results with other results
+  _calculate_rating(bucket, 1.0)
+  apply_positional_rating_correction(bucket) # TODO: merge results with other results
   # TODO: select best results from list
   return [], [], 0  # TODO: return real results
 
@@ -223,7 +221,7 @@ def _calculate_rating(parent_bucket, total_rating):
   """
   segments = 3  # Base number of segments on each interval
 
-  draft_list_of_buckets = []
+  list_of_subbuckets = []
   step = (parent_bucket.period_end_timestamp - parent_bucket.period_start_timestamp) / 3
   start_timestamp = parent_bucket.period_start_timestamp
   # Compose a draft list of non-empty buckets (some buckets in this list may contain more than 1 backup)
@@ -234,21 +232,18 @@ def _calculate_rating(parent_bucket, total_rating):
       if start_timestamp <= backup.timestamp < end_timestamp:
         current_bucket.put_backup(backup)
     if len(current_bucket.get_backups()) > 0:
-      draft_list_of_buckets.append(current_bucket)
+      list_of_subbuckets.append(current_bucket)
     start_timestamp = end_timestamp
 
-  # Calculate rating of each backup, and populate a list of results
-  resulting_list_of_backups = []
-  for bucket in draft_list_of_buckets:
-    share_of_rating = total_rating / len(draft_list_of_buckets)
+  # Calculate rating of each backup
+  for bucket in list_of_subbuckets:
+    portion_of_rating = total_rating / len(list_of_subbuckets)
     if len(bucket.get_backups()) == 1:
       backup = bucket.get_backups()[0]
-      backup.rating = share_of_rating
-      resulting_list_of_backups.append(backup)
+      backup.rating = portion_of_rating
     else:
-      resulting_list_of_backups += _calculate_rating(bucket, share_of_rating)
+      _calculate_rating(bucket, portion_of_rating)
 
-  return draft_list_of_buckets
 
 
 def apply_positional_rating_correction(bucket):
