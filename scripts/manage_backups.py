@@ -206,9 +206,14 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   a difference between expected number of resuls and the actual number of results.
   """
   # TODO: implement
-  _split_buckets()
-  apply_positional_rating_correction()
-  return [], [], 0
+  # TODO define proper condition
+  while True:
+    buckets = _split_buckets() # TODO: make method return a value
+    # TODO: merge buckets with previous results
+  for bucket in buckets:
+    apply_positional_rating_correction(bucket) # TODO: merge results with other results
+  # TODO: select best results from list
+  return [], [], 0  # TODO: return real results
 
 
 def _split_buckets(bucket, total_rating):
@@ -218,6 +223,7 @@ def _split_buckets(bucket, total_rating):
   :param total_rating:
   :return: a list of buckets
   """
+  backups = bucket.get_backups()
   # TODO: implement
   return _split_buckets()
 
@@ -296,9 +302,9 @@ class Bucket:
   """
   def __init__(self, period_start_timestamp, period_end_timestamp, backups=None):
     if backups is None:
-      self.backups = []
+      self._backups = []
     else:
-      self.backups = backups
+      self._backups = backups
     self.period_start_timestamp = period_start_timestamp
     self.period_end_timestamp = period_end_timestamp
 
@@ -307,16 +313,16 @@ class Bucket:
 
   def __eq__(self, other):
     if isinstance(other, Bucket):
-      return self.backups == other.backups and \
+      return self._backups == other._backups and \
              self.period_start_timestamp == other.period_start_timestamp and \
              self.period_end_timestamp == other.period_end_timestamp
     return NotImplemented
 
   def put_backup(self, backup):
-    self.backups.append(backup)
+    self._backups.append(backup)
 
   def get_backups(self):
-    return self.backups
+    return self._backups
 
 
 def _list_backup_files(args):
