@@ -258,10 +258,8 @@ def _calculate_ratings(parent_bucket, total_rating):
 
 def apply_positional_rating_correction(bucket):
   """
-  Correct rating of each backup to ln(current_rating) relatively to period bounds. This action tends to promote
-  the most recent backups
-  :param bucket:
-  :return:
+  Correct rating of each backup relatively to period bounds. This action tends to promote the most recent backups
+  :param bucket: bucket with backups
   """
   for backup in bucket.get_backups():
     position_coeff = (backup.timestamp - bucket.period_start_timestamp) / \
