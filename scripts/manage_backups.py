@@ -215,7 +215,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   promoted_backups = []
   unused_backups = []
   vacant_places = max_number_of_results
-  for backup in sorted(bucket.get_backups(), key=lambda backup: backup.rating, reverse=True):
+  for backup in sorted(bucket.get_backups(), key=lambda b: b.rating, reverse=True):
     if vacant_places > 0:
       promoted_backups.append(backup)
       vacant_places -= 1
