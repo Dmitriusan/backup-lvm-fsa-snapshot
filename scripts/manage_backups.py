@@ -146,7 +146,7 @@ def auto_clean(args):
 
 def _choose_valuable_backups(backups, args):
   """
-  :param backups: source list of backups (sorted ascending by timestamps, e.g. the most recent backup is last)
+  :param backups: source list of backups
   :return: a list of backups that are valuable and should be preserved
   """
   result = []
@@ -173,9 +173,8 @@ def _choose_valuable_backups(backups, args):
 def _put_to_buckets_by_time_periods(backups):
   """
   Splits list of backups into separate buckets by time periods (last 7 days, last 31 day, last 365 days, other)
-  :param backups: list of backups, sorted asc by timestamp
-  :return: tuple of (daily_backups_bucket, weekly_backups_bucket, monthly_backups_bucket, yearly_backups_bucket),
-   backups within each bucket are sorted asc by timestamp
+  :param backups: list of backups
+  :return: tuple of (daily_backups_bucket, weekly_backups_bucket, monthly_backups_bucket, yearly_backups_bucket)
   """
 
   day_seconds = 24 * 3600
