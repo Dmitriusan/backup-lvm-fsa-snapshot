@@ -84,6 +84,8 @@ def configure_parser():
 def validate_args(args):
   if args.remove_file and not args.action == REMOVE_UNSUCCESSFUL_ACTION:
     raise ValueError("--remove-file option is only valid for action '%s'" % REMOVE_UNSUCCESSFUL_ACTION)
+
+
 # endregion
 
 
@@ -114,6 +116,8 @@ def generate_name(args):
     os.makedirs(args.backup_dest_dir)
 
   return full_path, 0
+
+
 # endregion
 
 
@@ -154,7 +158,7 @@ def _choose_valuable_backups(backups, args):
     (monthly_bucket, args.monthly_backups_max_count),
     (yearly_bucket, args.yearly_backups_max_count)
   ]
-  carry = 0   # Vacant slots for backups that are carried to a next level
+  carry = 0  # Vacant slots for backups that are carried to a next level
   unused = []  # Backups that were not used on a previous level
   for bucket, limit in levels:
     for unused_backup in unused:
@@ -205,12 +209,19 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   :return: a tuple of (list of promoted backups, unused_backups, vacant_places), where vacant_places is
   a difference between expected number of resuls and the actual number of results.
   """
-  # TODO: implement
-  # TODO define proper condition
   _calculate_rating(bucket, 1.0)
-  apply_positional_rating_correction(bucket) # TODO: merge results with other results
-  # TODO: select best results from list
-  return [], [], 0  # TODO: return real results
+  apply_positional_rating_correction(bucket)  # TODO: merge results with other results
+
+  promoted_backups = []
+  unused_backups = []
+  vacant_places = max_number_of_results
+  for backup in sorted(bucket.get_backups(), key=lambda backup: backup.rating, reverse=True):
+    if vacant_places > 0:
+      promoted_backups.append(backup)
+      vacant_places -= 1
+    else:
+      unused_backups.append(backup)
+  return promoted_backups, unused_backups, vacant_places
 
 
 def _calculate_rating(parent_bucket, total_rating):
@@ -224,7 +235,8 @@ def _calculate_rating(parent_bucket, total_rating):
   list_of_subbuckets = []
   step = (parent_bucket.period_end_timestamp - parent_bucket.period_start_timestamp) / 3
   start_timestamp = parent_bucket.period_start_timestamp
-  # Compose a draft list of non-empty buckets (some buckets in this list may contain more than 1 backup)
+  # Split bucket on non-empty sub-buckets within time intervals (some buckets in this
+  # list may contain more than 1 backup)
   for i in range(0, segments):
     end_timestamp = start_timestamp + step
     current_bucket = Bucket(start_timestamp, end_timestamp)
@@ -245,16 +257,18 @@ def _calculate_rating(parent_bucket, total_rating):
       _calculate_rating(bucket, portion_of_rating)
 
 
-
 def apply_positional_rating_correction(bucket):
   """
-  Correct rating of each backup to ln(current_rating) relatively to period bounds. This tends to promote
+  Correct rating of each backup to ln(current_rating) relatively to period bounds. This action tends to promote
   the most recent backups
   :param bucket:
   :return:
   """
-  # TODO: implement
-  pass
+  for backup in bucket.get_backups():
+    position_coeff = (backup.timestamp - bucket.period_start_timestamp) / \
+                     (bucket.period_end_timestamp - bucket.period_start_timestamp)
+    backup.rating = backup.rating * position_coeff ^ 2
+
 
 # endregion
 
@@ -288,6 +302,8 @@ def remove_unsuccessful(args):
   # If all checks passed, remove the file
   os.remove(args.remove_file)
   return "Removed %s" % args.remove_file, 0
+
+
 # endregion
 
 
@@ -296,6 +312,7 @@ class Backup:
   """
   A representation of backup file on disk. Contains additional metainfo computed at runtime
   """
+
   def __init__(self, path, filename, timestamp):
     self.path = path
     self.filename = filename
@@ -308,9 +325,9 @@ class Backup:
   def __eq__(self, other):
     if isinstance(other, Backup):
       return self.path == other.path and \
-        self.filename == other.filename and \
-        self.timestamp == other.timestamp and \
-        self.rating == other.rating
+             self.filename == other.filename and \
+             self.timestamp == other.timestamp and \
+             self.rating == other.rating
     return NotImplemented
 
 
@@ -318,6 +335,7 @@ class Bucket:
   """
   A group of backups that relies to some time period.
   """
+
   def __init__(self, period_start_timestamp, period_end_timestamp, backups=None):
     if backups is None:
       self._backups = []
@@ -366,6 +384,8 @@ def _list_backup_files(args):
     backup = Backup(full_path, filename, file_time.timestamp())
     result.append(backup)
   return sorted(result, key=lambda item: item.timestamp)
+
+
 # endregion
 
 
