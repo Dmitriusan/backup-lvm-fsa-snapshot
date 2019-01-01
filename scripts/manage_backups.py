@@ -207,8 +207,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   """
   # TODO: implement
   # TODO define proper condition
-  while True:
-    buckets = _calculate_rating() # TODO: make method return a value
+  _calculate_rating(bucket, 1.0) # TODO: make method return a value
     # TODO: merge buckets with previous results
   for bucket in buckets:
     apply_positional_rating_correction(bucket) # TODO: merge results with other results
@@ -218,9 +217,9 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
 
 def _calculate_rating(parent_bucket, total_rating):
   """
-  :param parent_bucket:
-  :param total_rating:
-  :return: a list of backups
+  Modifies backups at the parent_bucket by assigning them a rating value
+  :param parent_bucket: metadata of this bucket will be used to calculate a rating for backups in the bucket
+  :param total_rating: a total number of rating that should be distributed between backups
   """
   segments = 3  # Base number of segments on each interval
 
