@@ -209,7 +209,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   :return: a tuple of (list of promoted backups, unused_backups, vacant_places), where vacant_places is
   a difference between expected number of resuls and the actual number of results.
   """
-  _calculate_rating(bucket, 1.0)
+  _calculate_ratings(bucket, 1.0)
   apply_positional_rating_correction(bucket)
 
   promoted_backups = []
@@ -224,7 +224,7 @@ def _promote_best_backups_from_bucket(bucket, max_number_of_results):
   return promoted_backups, unused_backups, vacant_places
 
 
-def _calculate_rating(parent_bucket, total_rating):
+def _calculate_ratings(parent_bucket, total_rating):
   """
   Modifies backups at the parent_bucket by assigning them a rating value
   :param parent_bucket: metadata of this bucket will be used to calculate a rating for backups in the bucket
@@ -254,7 +254,7 @@ def _calculate_rating(parent_bucket, total_rating):
       backup = bucket.get_backups()[0]
       backup.rating = portion_of_rating
     else:
-      _calculate_rating(bucket, portion_of_rating)
+      _calculate_ratings(bucket, portion_of_rating)
 
 
 def apply_positional_rating_correction(bucket):
