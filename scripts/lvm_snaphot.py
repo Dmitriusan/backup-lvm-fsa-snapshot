@@ -418,6 +418,7 @@ def main():
         except Exception as e:
             print("Mounting snapshot failed, trying to clean things up")
             unmount_snapshot(args)
+            print("Clean things up, raising the original exception")
             raise e
     elif args.action == SNAPSHOT_UNMOUNT_ACTION:
         unmount_snapshot(args)
